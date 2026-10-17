@@ -19,45 +19,53 @@
   #wrap { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; }
   canvas { width: min(calc(100vw - 32px), 900px); aspect-ratio: 600 / 150; display: block; transition: filter 1s; touch-action: none; }
   canvas.inverted { filter: invert(1); }
-  /* Zona inferior: los controles y, al morir, el leaderboard ocupan el MISMO hueco (el juego no se mueve) */
-  #under { position: relative; width: min(calc(100vw - 32px), 900px); min-height: 178px; margin-top: 18px; }
-  #over { position: absolute; top: 0; left: 0; right: 0; display: flex; gap: 40px; flex-wrap: wrap; justify-content: center; align-items: flex-start;
-          font: bold 12px 'Courier New', monospace; color: #535353; text-transform: uppercase; transition: color 1s; }
+  /* Controles: pequeños y discretos (no se iluminan) */
+  #under { width: min(calc(100vw - 32px), 900px); min-height: 84px; margin-top: 14px; }
+  #hint { display: flex; gap: 26px; flex-wrap: wrap; justify-content: center; align-items: flex-start; padding: 0 12px; font: 10px 'Courier New', monospace; color: #535353; opacity: .85; transition: color 1s; }
+  body.night #hint { color: #bbb; }
+  body.overOpen #hint { visibility: hidden; }
+  #hint .grp { display: flex; flex-direction: column; align-items: center; gap: 5px; max-width: 190px; text-align: center; }
+  #hint .lbl { line-height: 1.3; }
+  .key { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 22px; box-sizing: border-box; padding: 0 6px; border: 1.5px solid currentColor; border-radius: 4px; font: bold 10px 'Courier New', monospace; box-shadow: 0 2px 0 currentColor; user-select: none; }
+  .key.wide { min-width: 76px; }
+  .arrows { display: grid; grid-template-columns: repeat(3, 22px); grid-template-areas: ". up ." "left down right"; gap: 3px; }
+  .arrows [data-k=ArrowUp] { grid-area: up; } .arrows [data-k=ArrowLeft] { grid-area: left; } .arrows [data-k=ArrowDown] { grid-area: down; } .arrows [data-k=ArrowRight] { grid-area: right; }
+  .arrows .key { min-width: 22px; padding: 0; }
+  .ar { display: block; width: 0; height: 0; border-style: solid; border-color: transparent; }
+  .ar.u { border-width: 0 4px 6px 4px; border-bottom-color: currentColor; } .ar.d { border-width: 6px 4px 0 4px; border-top-color: currentColor; }
+  .ar.l { border-width: 4px 6px 4px 0; border-right-color: currentColor; } .ar.r { border-width: 4px 0 4px 6px; border-left-color: currentColor; }
+
+  /* Leaderboard: popup flotante sobre el juego (el juego no se mueve; Espacio sigue reiniciando) */
+  #over { position: fixed; left: 50%; top: 50%; transform: translate(-50%, calc(-50% + 74px)); z-index: 10;
+          width: min(490px, calc(100vw - 24px)); box-sizing: border-box; padding: 14px 18px 16px; display: flex; flex-direction: column; gap: 9px;
+          background: #fff; color: #535353; border: 2px solid #535353; border-radius: 8px; box-shadow: 0 4px 0 #535353;
+          font: bold 12px 'Courier New', monospace; text-transform: uppercase; transition: color 1s, background 1s, border-color 1s, box-shadow 1s; }
   #over[hidden], #over [hidden] { display: none !important; }
-  body.night #over { color: #bbb; }
-  #over .col { display: flex; flex-direction: column; gap: 9px; }
+  body.night #over { background: #000; color: #bbb; border-color: #bbb; box-shadow: 0 4px 0 #bbb; }
+  #over .head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; padding-right: 22px; }
   #over .ttl { letter-spacing: 7px; }
-  #board { list-style: none; margin: 0; padding: 0; columns: 2; column-gap: 28px; width: 380px; }
+  #over .pts { font-size: 14px; letter-spacing: 1px; }
+  #over .x { position: absolute; top: 5px; right: 8px; font: bold 14px 'Courier New', monospace; color: inherit; background: none; border: 0; cursor: pointer; padding: 2px 4px; opacity: .7; }
+  #over .x:hover { opacity: 1; }
+  #board { list-style: none; margin: 0; padding: 0; columns: 2; column-gap: 26px; }
   #board li { display: flex; gap: 6px; padding: 1px 4px; white-space: nowrap; break-inside: avoid; }
   #board li.me { background: #535353; color: #fff; }
   body.night #board li.me { background: #bbb; color: #000; }
-  #board .rk { width: 28px; text-align: right; } #board .nm { flex: 1; overflow: hidden; text-overflow: ellipsis; }
-  #over .act { min-width: 250px; align-items: flex-start; }
-  #over .pts { font-size: 15px; letter-spacing: 1px; }
+  #board .rk { width: 26px; text-align: right; } #board .nm { flex: 1; overflow: hidden; text-overflow: ellipsis; }
   #over .msg { min-height: 14px; }
   #over form { display: flex; gap: 10px; align-items: flex-end; }
   #over input { font: bold 15px 'Courier New', monospace; letter-spacing: 5px; color: inherit; background: transparent; border: 0; border-bottom: 2px solid currentColor;
                 width: 150px; padding: 3px 2px; outline: none; border-radius: 0; text-transform: uppercase; }
   #over input::placeholder { opacity: .45; }
-  .kbtn { font: bold 12px 'Courier New', monospace; color: inherit; background: transparent; border: 2px solid currentColor; border-radius: 6px; padding: 6px 12px;
-          box-shadow: 0 3px 0 currentColor; cursor: pointer; text-transform: uppercase; }
-  .kbtn:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 0 0 currentColor; }
+  .kbtn { font: bold 11px 'Courier New', monospace; color: inherit; background: transparent; border: 1.5px solid currentColor; border-radius: 4px; padding: 5px 10px;
+          box-shadow: 0 2px 0 currentColor; cursor: pointer; text-transform: uppercase; }
+  .kbtn:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 0 0 currentColor; }
   .kbtn:disabled { opacity: .5; cursor: default; }
-  #over .again { display: flex; gap: 10px; align-items: center; }
-  #over .note { font-size: 10px; opacity: .7; max-width: 380px; text-transform: none; }
-  #toast { font-size: 11px; text-transform: none; max-width: 300px; min-height: 13px; }
-  @media (max-width: 700px) { #board { columns: 1; width: auto; } #under { min-height: 330px; } }
-  #hint { display: flex; gap: 34px; flex-wrap: wrap; justify-content: center; align-items: flex-start; margin-top: 0; padding: 0 16px; font: 12px 'Courier New', monospace; color: #535353; transition: color 1s; }
-  body.night #hint { color: #bbb; }
-  #hint .grp { display: flex; flex-direction: column; align-items: center; gap: 8px; max-width: 220px; text-align: center; }
-  #hint .lbl { line-height: 1.35; }
-  .key { display: inline-flex; align-items: center; justify-content: center; min-width: 34px; height: 34px; box-sizing: border-box; padding: 0 10px; border: 2px solid currentColor; border-radius: 6px; font: bold 14px 'Courier New', monospace; box-shadow: 0 3px 0 currentColor; transition: transform .05s, box-shadow .05s, background .05s; user-select: none; }
-  .key.wide { min-width: 120px; }
-  .key.on { transform: translateY(3px); box-shadow: 0 0 0 currentColor; background: #535353; color: #fff; }
-  body.night .key.on { background: #bbb; color: #000; }
-  .arrows { display: grid; grid-template-columns: repeat(3, 34px); grid-template-areas: ". up ." "left down right"; gap: 5px; }
-  .arrows [data-k=ArrowUp] { grid-area: up; } .arrows [data-k=ArrowLeft] { grid-area: left; } .arrows [data-k=ArrowDown] { grid-area: down; } .arrows [data-k=ArrowRight] { grid-area: right; }
-  .arrows .key { min-width: 34px; padding: 0; }
+  #over .foot { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+  #over .again { display: flex; gap: 8px; align-items: center; font-size: 10px; }
+  #over .note { font-size: 10px; opacity: .7; text-transform: none; }
+  #toast { font-size: 10px; text-transform: none; min-height: 12px; }
+  @media (max-width: 520px) { #board { columns: 1; } }
 </style>
 </head>
 <body>
@@ -66,28 +74,26 @@
   <div id="under">
   <div id="hint">
     <div class="grp"><span class="key wide" data-k="Space">ESPACIO</span><div class="lbl"><b>SALTAR</b><br>mantenlo en el aire = propulsión</div></div>
-    <div class="grp"><div class="arrows"><span class="key" data-k="ArrowUp">↑︎</span><span class="key" data-k="ArrowLeft">←︎</span><span class="key" data-k="ArrowDown">↓︎</span><span class="key" data-k="ArrowRight">→︎</span></div>
-      <div class="lbl"><b>PIRUETAS (en el aire)</b><br>←︎ →︎ flips · ↑︎ ↓︎ barrel roll<br>↑︎ también salta</div></div>
+    <div class="grp"><div class="arrows"><span class="key" data-k="ArrowUp"><i class="ar u"></i></span><span class="key" data-k="ArrowLeft"><i class="ar l"></i></span><span class="key" data-k="ArrowDown"><i class="ar d"></i></span><span class="key" data-k="ArrowRight"><i class="ar r"></i></span></div>
+      <div class="lbl"><b>PIRUETAS (en el aire)</b><br>izq / der = flips<br>arriba / abajo = barrel roll<br>(arriba también salta)</div></div>
     <div class="grp"><span class="key wide" data-k="Enter">INTRO</span><div class="lbl"><b>ATAJO DE PRUEBAS</b><br>10 puntos antes de la rampa</div></div>
   </div>
-    <div id="over" hidden>
-      <div class="col">
-        <div class="ttl">TOP 100</div>
-        <ol id="board"></ol>
-        <div class="note" id="boardNote" hidden></div>
-      </div>
-      <div class="col act">
-        <div class="pts">PUNTOS <b id="finalScore">00000</b></div>
-        <div class="msg" id="topMsg"></div>
-        <form id="nameForm" autocomplete="off" hidden>
-          <input id="nameInput" maxlength="12" placeholder="NOMBRE" spellcheck="false" autocomplete="off">
-          <button type="submit" id="saveBtn" class="kbtn">↵ GUARDAR</button>
-        </form>
-        <div class="msg" id="saved" hidden></div>
+    <div id="over" hidden role="dialog" aria-label="Leaderboard">
+      <button class="x" id="closeBtn" type="button" title="Cerrar (Esc)">✕</button>
+      <div class="head"><span class="ttl">TOP 100</span><span class="pts">PUNTOS <b id="finalScore">00000</b></span></div>
+      <ol id="board"></ol>
+      <div class="note" id="boardNote" hidden></div>
+      <div class="msg" id="topMsg"></div>
+      <form id="nameForm" autocomplete="off" hidden>
+        <input id="nameInput" maxlength="12" placeholder="NOMBRE" spellcheck="false" autocomplete="off">
+        <button type="submit" id="saveBtn" class="kbtn">↵ GUARDAR</button>
+      </form>
+      <div class="msg" id="saved" hidden></div>
+      <div class="foot">
         <button id="shareBtn" type="button" class="kbtn">COMPARTIR EN X</button>
-        <div id="toast"></div>
         <div class="again"><span class="key wide" data-k="Space">ESPACIO</span><span>JUGAR OTRA VEZ</span></div>
       </div>
+      <div id="toast"></div>
     </div>
   </div>
 </div>
@@ -988,10 +994,6 @@ function skipToRamp() {
 }
 const ARROWS = { ArrowLeft: 'left', ArrowRight: 'right', ArrowDown: 'down' };
 // teclas visuales: se iluminan al pulsarlas
-const keyEls = c => document.querySelectorAll('.key[data-k="' + c + '"]');
-document.addEventListener('keydown', e => keyEls(e.code).forEach(el => el.classList.add('on')));
-document.addEventListener('keyup', e => keyEls(e.code).forEach(el => el.classList.remove('on')));
-window.addEventListener('blur', () => document.querySelectorAll('.key.on').forEach(el => el.classList.remove('on')));
 const typing = e => e.target && /^(INPUT|TEXTAREA|BUTTON|SELECT)$/.test(e.target.tagName);
 document.addEventListener('keydown', e => {
   const overOpen = S.crashed && !$('over').hidden;
@@ -1082,7 +1084,7 @@ async function showOver() {
   $('finalScore').textContent = pad(finalScore);
   $('nameForm').hidden = true; $('saved').hidden = true; $('saveBtn').disabled = false; $('topMsg').textContent = ''; $('toast').textContent = '';
   try { $('nameInput').value = localStorage.getItem(LS_NAME) || ''; } catch (e) {}
-  $('over').hidden = false; $('hint').style.visibility = 'hidden';
+  $('over').hidden = false; document.body.classList.add('overOpen');
   const list = await refreshBoard(null);
   if (!S.crashed) return;
   const rank = topRank(list, finalScore);
@@ -1095,7 +1097,7 @@ async function showOver() {
   }
 }
 function hideOver() {
-  $('over').hidden = true; $('hint').style.visibility = 'visible';
+  $('over').hidden = true; document.body.classList.remove('overOpen');
   if (document.activeElement && document.activeElement !== document.body) document.activeElement.blur();
 }
 const wantsSave = () => !$('over').hidden && !$('nameForm').hidden && !$('saveBtn').disabled && $('nameInput').value.trim().length > 0;
@@ -1188,6 +1190,8 @@ async function shareScore() {
 }
 $('nameForm').addEventListener('submit', e => { e.preventDefault(); saveScore(); });
 $('shareBtn').addEventListener('click', shareScore);
+$('closeBtn').addEventListener('click', hideOver);
+document.addEventListener('keydown', e => { if (e.code === 'Escape' && !$('over').hidden) { e.preventDefault(); hideOver(); } });
 canvas.addEventListener('pointerdown', e => { e.preventDefault(); press(); });
 window.addEventListener('pointerup', release);
 window.addEventListener('blur', () => { release(); S.keys = {}; S.upLock = false; });
