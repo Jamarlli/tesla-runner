@@ -1,0 +1,14 @@
+{
+  "name": "tesla-runner",
+  "version": "1.0.0",
+  "description": "El juego del dinosaurio de Chrome con un Tesla Roadster propulsado por gas frío. Pixel art, rampas, piruetas y leaderboard.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": ["game", "canvas", "pixel-art", "endless-runner", "tesla", "chrome-dino"],
+  "license": "MIT"
+}

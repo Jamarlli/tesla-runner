@@ -1,0 +1,6 @@
+.git
+node_modules
+scores.json
+scores.json.tmp
+data
+README.md

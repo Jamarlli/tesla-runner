@@ -1,0 +1,9 @@
+# Leaderboard local (cada despliegue tiene el suyo)
+scores.json
+scores.json.tmp
+data/
+
+node_modules/
+.DS_Store
+Thumbs.db
+.claude/
