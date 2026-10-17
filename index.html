@@ -12,7 +12,7 @@
 <meta property="og:image" content="https://jamarlli.github.io/tesla-runner/og-image.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="El Tesla Roadster flotando sobre una fila de coches con gas frío y un Starship acercándose, con 99999 puntos y 99999 metros">
+<meta property="og:image:alt" content="El Tesla Roadster flotando sobre una fila de coches con gas frío y un Starship acercándose, con el marcador HI 99999 y 99999 puntos">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Tesla Runner">
 <meta name="twitter:description" content="El juego del dinosaurio de Chrome con un Tesla Roadster propulsado por gas frío.">
@@ -1152,8 +1152,9 @@ function shareScore() {
 }
 
 // Genera og-image.png (1200x630): el Roadster flotando sobre una fila de coches con gas frío, un Starship acercándose a lo lejos
-// y puntos/metros arriba a la derecha. Se usa como tarjeta del enlace; se regenera con ?debug -> T.makeShareImage(99999, 9999)
-function makeShareImage(sc, meters) {
+// y el marcador arriba a la derecha como en el HUD del juego (HI = récord, y los puntos). Se usa como tarjeta del enlace;
+// se regenera con ?debug -> T.makeShareImage(99999, 99999)
+function makeShareImage(sc, hi) {
   const c = document.createElement('canvas'); c.width = 1200; c.height = 630; const g = c.getContext('2d');
   g.imageSmoothingEnabled = false; g.fillStyle = '#fff'; g.fillRect(0, 0, 1200, 630);
   const U = 4, gy = 548;
@@ -1184,8 +1185,11 @@ function makeShareImage(sc, meters) {
   g.fillStyle = COLOR; g.textBaseline = 'top';
   g.font = "bold 30px 'Courier New', monospace"; g.textAlign = 'left'; g.fillText('T E S L A   R U N N E R', 44, 40);
   g.textAlign = 'right';
-  if (sc != null) { g.font = "bold 54px 'Courier New', monospace"; g.fillText(pad(sc), 1156, 34); }
-  if (meters != null) { g.font = "bold 30px 'Courier New', monospace"; g.fillText(meters + ' M', 1156, 96); }
+  if (sc != null) {
+    g.font = "bold 54px 'Courier New', monospace"; const w = g.measureText(pad(sc)).width;
+    g.fillText(pad(sc), 1156, 34);
+    if (hi != null) { g.fillStyle = '#757575'; g.fillText('HI ' + pad(hi), 1156 - w - 44, 34); g.fillStyle = COLOR; }
+  }
   return c;
 }
 $('nameForm').addEventListener('submit', e => { e.preventDefault(); saveScore(); });
