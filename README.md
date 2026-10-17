@@ -20,7 +20,7 @@ El juego del dinosaurio de Chrome, pero con un **Tesla Roadster** que se propuls
 | `INTRO` | Atajo de pruebas: salta a 10 puntos de la siguiente rampa |
 | `ESPACIO` en el game over | Vuelve a jugar al instante. Si ya has empezado a escribir tu nombre para el TOP 100, el espacio es un espacio del nombre; `INTRO` lo guarda |
 
-En móvil: toca la pantalla para saltar y mantén para propulsarte.
+**En móvil / táctil** (también funciona en el navegador integrado de X): toca en cualquier parte para saltar y mantén el dedo para propulsarte. Debajo hay botones grandes para las piruetas: **FLIPS** (◀ ▶) y **ROLL** (▲ ▼); puedes pulsarlos con el otro pulgar sin soltar la propulsión. En pantallas estrechas el juego usa un ancho lógico menor (360-600 px) para verse a tamaño real y reduce la velocidad del scroll, como hace el T-Rex original.
 
 ## Jugar en local
 
@@ -103,7 +103,7 @@ El token es un secreto de Cloudflare: **nunca** va en el repo ni en `index.html`
 index.html   el juego completo (canvas, sprites en pixel art, física, UI del leaderboard)
 server.js    servidor sin dependencias: sirve el juego y guarda scores.json
 worker/      Worker de Cloudflare: guarda el TOP 100 como scores.json en la rama `leaderboard`
-og-image.png tarjeta de imagen del enlace (generada con el propio juego)
+og-image-2.png tarjeta de imagen del enlace (generada con el propio juego; el número cambia si cambia la imagen, porque X cachea las tarjetas)
 Dockerfile   imagen lista para desplegar
 fly.toml     plantilla para Fly.io
 ```

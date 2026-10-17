@@ -2,34 +2,38 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <title>Tesla Runner</title>
 <meta name="description" content="Tesla Runner: el juego del dinosaurio de Chrome con un Tesla Roadster propulsado por gas frío. Salta, vuela y haz piruetas.">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Tesla Runner">
 <meta property="og:description" content="El juego del dinosaurio de Chrome con un Tesla Roadster propulsado por gas frío. ¿Cuántos puntos haces?">
-<meta property="og:url" content="https://jamarlli.github.io/tesla-runner/">
-<meta property="og:image" content="https://jamarlli.github.io/tesla-runner/og-image.png">
+<meta property="og:image" content="https://jamarlli.github.io/tesla-runner/og-image-2.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="El Tesla Roadster flotando sobre una fila de coches con gas frío y un Starship acercándose, con el marcador HI 99999 y 99999 puntos">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Tesla Runner">
 <meta name="twitter:description" content="El juego del dinosaurio de Chrome con un Tesla Roadster propulsado por gas frío.">
-<meta name="twitter:image" content="https://jamarlli.github.io/tesla-runner/og-image.png">
+<meta name="twitter:image" content="https://jamarlli.github.io/tesla-runner/og-image-2.png">
 <script>
   // API del leaderboard cuando el juego está en GitHub Pages (Worker de Cloudflare que guarda el TOP 100 en la rama "leaderboard" del repo).
   // En local (localhost) se usa siempre server.js; con ?api=https://... se puede probar otro servidor.
   window.TESLA_RUNNER_API = 'https://tesla-runner-api.paper-jev.workers.dev';
 </script>
 <style>
-  html, body { margin: 0; height: 100%; background: #fff; transition: background 1s; }
+  html, body { margin: 0; min-height: 100%; background: #fff; transition: background 1s; overscroll-behavior: none; touch-action: manipulation;
+               -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+  input { -webkit-user-select: text; user-select: text; }
   body.night { background: #000; }
-  #wrap { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-  canvas { width: min(calc(100vw - 32px), 900px); aspect-ratio: 600 / 150; display: block; transition: filter 1s; touch-action: none; }
+  #wrap { min-height: 100vh; min-height: 100dvh; box-sizing: border-box; padding: 8px 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  canvas { display: block; max-width: 100%; transition: filter 1s; touch-action: none; }   /* el tamaño lo fija layout() según la pantalla */
   canvas.inverted { filter: invert(1); }
   /* Controles: pequeños y discretos (no se iluminan) */
-  #under { width: min(calc(100vw - 32px), 900px); min-height: 84px; margin-top: 14px; }
+  #under { width: 100%; max-width: 900px; min-height: 84px; margin-top: 14px; }
   #hint { display: flex; gap: 26px; flex-wrap: wrap; justify-content: center; align-items: flex-start; padding: 0 12px; font: 10px 'Courier New', monospace; color: #535353; opacity: .85; transition: color 1s; }
   body.night #hint { color: #bbb; }
   body.overOpen #hint { visibility: hidden; }
@@ -43,6 +47,20 @@
   .ar { display: block; width: 0; height: 0; border-style: solid; border-color: transparent; }
   .ar.u { border-width: 0 4px 6px 4px; border-bottom-color: currentColor; } .ar.d { border-width: 6px 4px 0 4px; border-top-color: currentColor; }
   .ar.l { border-width: 4px 6px 4px 0; border-right-color: currentColor; } .ar.r { border-width: 4px 0 4px 6px; border-left-color: currentColor; }
+
+  /* Móvil / táctil: sin teclas. Toca = saltar, mantén = propulsión; botones grandes para las piruetas */
+  #touch { display: none; width: 100%; max-width: 900px; box-sizing: border-box; padding: 0 10px; justify-content: space-between; align-items: flex-end; gap: 8px;
+           font: bold 10px 'Courier New', monospace; color: #535353; transition: color 1s; }
+  body.night #touch { color: #bbb; }
+  body.overOpen #touch { visibility: hidden; }
+  #touch .tgrp { display: flex; flex-direction: column; align-items: center; gap: 7px; }
+  #touch .tbtns { display: flex; gap: 10px; }
+  #touch .tmid { text-align: center; line-height: 1.5; padding-bottom: 8px; }
+  .tbtn { width: 58px; height: 58px; padding: 0; display: inline-flex; align-items: center; justify-content: center; color: inherit; background: transparent;
+          border: 2px solid currentColor; border-radius: 10px; box-shadow: 0 3px 0 currentColor; touch-action: none; }
+  .tbtn:active { transform: translateY(3px); box-shadow: 0 0 0 currentColor; }
+  .tbtn .ar { transform: scale(2.2); }
+  @media (pointer: coarse) { #hint { display: none; } #touch { display: flex; } #under { min-height: 0; margin-top: 10px; } }
 
   /* Leaderboard: popup flotante sobre el juego (el juego no se mueve; Espacio sigue reiniciando) */
   #over { position: fixed; left: 50%; top: 50%; transform: translate(-50%, calc(-50% + 74px)); z-index: 10;
@@ -74,6 +92,8 @@
   #over .again { display: flex; gap: 8px; align-items: center; font-size: 10px; }
   #over .note { font-size: 10px; opacity: .7; text-transform: none; }
   @media (max-width: 520px) { #board { columns: 1; } }
+  #over { max-height: calc(100vh - 16px); max-height: calc(100dvh - 16px); overflow-y: auto; }
+  @media (max-height: 480px) { #over { transform: translate(-50%, -50%); padding: 8px 12px 10px; gap: 5px; } #board { columns: 2 !important; } }
 </style>
 </head>
 <body>
@@ -86,6 +106,11 @@
       <div class="lbl"><b>PIRUETAS (en el aire)</b><br>izq / der = flips<br>arriba / abajo = barrel roll<br>(arriba también salta)</div></div>
     <div class="grp"><span class="key wide" data-k="Enter">INTRO</span><div class="lbl"><b>ATAJO DE PRUEBAS</b><br>10 puntos antes de la rampa</div></div>
   </div>
+    <div id="touch">
+      <div class="tgrp"><div class="tbtns"><button class="tbtn" data-k="ArrowLeft" aria-label="Flip izquierda"><i class="ar l"></i></button><button class="tbtn" data-k="ArrowRight" aria-label="Flip derecha"><i class="ar r"></i></button></div><span>FLIPS</span></div>
+      <div class="tmid">TOCA = SALTAR<br>MANTÉN = PROPULSIÓN</div>
+      <div class="tgrp"><div class="tbtns"><button class="tbtn" data-k="ArrowUp" aria-label="Roll arriba"><i class="ar u"></i></button><button class="tbtn" data-k="ArrowDown" aria-label="Roll abajo"><i class="ar d"></i></button></div><span>ROLL</span></div>
+    </div>
     <div id="over" hidden role="dialog" aria-label="Leaderboard">
       <button class="x" id="closeBtn" type="button" title="Cerrar (Esc)">✕</button>
       <div class="head"><span class="ttl">TOP 100</span><span class="pts">PUNTOS <b id="finalScore">00000</b></span></div>
@@ -109,7 +134,9 @@
 'use strict';
 
 /* ===== Config (valores del runner original de Chromium) ===== */
-const W = 600, H = 150, FPS = 60, MS_PER_FRAME = 1000 / FPS;
+let W = 600;   // ancho lógico: 600 en pantallas anchas; en móvil se estrecha para que el juego se vea a tamaño real
+const H = 150, FPS = 60, MS_PER_FRAME = 1000 / FPS;
+let SPEED_SCALE = 1;
 const CFG = {
   ACCELERATION: 0.001, BG_CLOUD_SPEED: 0.2, BOTTOM_PAD: 10, CLEAR_TIME: 3000,
   CLOUD_FREQUENCY: 0.5, GAMEOVER_CLEAR_TIME: 750, GAP_COEFFICIENT: 0.6, MAX_CLOUDS: 6,
@@ -150,19 +177,29 @@ const CAR_BOXES = [[1,5,70,12],[24,0.5,26,6],[7,13,12,6],[52,13,12,6]];
 /* ===== Canvas ===== */
 const canvas = document.getElementById('c');
 let ctx = canvas.getContext('2d');
+function layout() {
+  const vw = document.documentElement.clientWidth || window.innerWidth;
+  const cw = Math.min(vw - (vw < 700 ? 12 : 32), 900);            // ancho en píxeles CSS del juego
+  W = Math.max(360, Math.min(600, Math.round(cw)));               // en un móvil vertical: ~1 píxel lógico = 1 píxel de pantalla (no se ve enano)
+  SPEED_SCALE = W < 600 ? Math.min(1, W / 600 * 1.2) : 1;         // como el T-Rex original en pantallas estrechas: más tiempo de reacción
+  canvas.style.width = cw + 'px'; canvas.style.height = Math.round(cw * H / W) + 'px';
+}
 function resize() {
+  layout();
   const k = canvas.clientWidth / W * (window.devicePixelRatio || 1);
   canvas.width = Math.round(W * k); canvas.height = Math.round(H * k);
   ctx.setTransform(k, 0, 0, k, 0, 0); ctx.imageSmoothingEnabled = false;
 }
 window.addEventListener('resize', resize);
+window.addEventListener('orientationchange', () => setTimeout(resize, 150));
 resize();
 
 /* ===== Audio ===== */
 let actx = null;
+function audio() { actx = actx || new (window.AudioContext || window.webkitAudioContext)(); if (actx.state === 'suspended') actx.resume(); return actx; }
 function tone(freq, dur, type = 'square', vol = 0.06, slideTo = null, delay = 0) {
   try {
-    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    audio();
     const t = actx.currentTime + delay, o = actx.createOscillator(), g = actx.createGain();
     o.type = type; o.frequency.setValueAtTime(freq, t);
     if (slideTo) o.frequency.exponentialRampToValueAtTime(slideTo, t + dur);
@@ -177,7 +214,7 @@ const sfx = {
   whoosh: () => tone(180, 0.7, 'sawtooth', 0.04, 1100),
   boom: () => {
     try {
-      actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+      audio();
       const len = actx.sampleRate * 0.9, buf = actx.createBuffer(1, len, actx.sampleRate), d = buf.getChannelData(0);
       for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2);
       const src = actx.createBufferSource(); src.buffer = buf;
@@ -192,7 +229,7 @@ let hiss = null;
 function thrustSound(on) {
   try {
     if (on && !hiss) {
-      actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+      audio();
       const len = actx.sampleRate * 2, buf = actx.createBuffer(1, len, actx.sampleRate), d = buf.getChannelData(0);
       for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
       const src = actx.createBufferSource(); src.buffer = buf; src.loop = true;
@@ -530,7 +567,8 @@ const qs = new URLSearchParams(location.search);
 const RAMP_DIST = +qs.get('ramp') || 271;            // puntos de distancia recorridos en el suelo hasta la siguiente rampa
 // Rampa: 1) el coche acelera hasta la rampa (P0)  2) sube por el arco (P1)  3) corre boca abajo por el techo (P2)  4) cae
 // La rampa es mucho más alta que la pantalla: se hace zoom out para verlo todo (y el suelo) y la caída dura casi un segundo.
-const P0 = 650, P1 = 1300, P2 = 500, RAMP_CX = 520, RUN_LEN = 150, RAMP_RX = 70, RAMP_RY = 150;
+const P0 = 650, P1 = 1300, P2 = 500, RUN_LEN = 150, RAMP_RX = 70, RAMP_RY = 150;
+const rampCX = () => W - 80;   // posición horizontal de la rampa (relativa al ancho de pantalla)
 const ZOOM_OUT = 0.43;
 const RAMP_CYC = 140 - RAMP_RY, CEIL_Y = 140 - 2 * RAMP_RY;   // centro de la elipse y altura del techo (fuera de la pantalla)
 const ROT = 0.32, GRACE = 2400;
@@ -745,15 +783,15 @@ function startRamp() {
 // posición del coche durante la rampa: centro y ángulo (el coche sigue el arco con las ruedas hacia dentro)
 function rampPose() {
   const r = S.ramp, t = r.t, h = CAR_H / 2;
-  if (t < P0) { const u = t / P0; return { x: r.x0 + (RAMP_CX - r.x0) * u * u, y: 140 - h, rot: 0 }; }
+  if (t < P0) { const u = t / P0; return { x: r.x0 + (rampCX() - r.x0) * u * u, y: 140 - h, rot: 0 }; }
   if (t < P0 + P1) {
     const a = Math.PI * (t - P0) / P1;
-    const fx = RAMP_CX + RAMP_RX * Math.sin(a), fy = RAMP_CYC + RAMP_RY * Math.cos(a);
+    const fx = rampCX() + RAMP_RX * Math.sin(a), fy = RAMP_CYC + RAMP_RY * Math.cos(a);
     const dx = RAMP_RX * Math.cos(a), dy = -RAMP_RY * Math.sin(a), len = Math.hypot(dx, dy) || 1, hx = dx / len, hy = dy / len;
     return { x: fx + hy * h, y: fy - hx * h, rot: Math.atan2(Math.min(0, hy), hx) };
   }
   const u = Math.min(1, (t - P0 - P1) / P2);
-  return { x: RAMP_CX - RUN_LEN * u, y: CEIL_Y + h, rot: -Math.PI };
+  return { x: rampCX() - RUN_LEN * u, y: CEIL_Y + h, rot: -Math.PI };
 }
 function updateRamp(dt) {
   const r = S.ramp; r.t += dt;
@@ -780,7 +818,7 @@ function update(dt) {
       p.r += 0.045 * fr; p.vx *= 0.995;
       if (p.y >= GROUND_LINE) { p.ground = true; p.y = GROUND_LINE; p.vy = 0; p.vx = (Math.random() < 0.5 ? -1 : 1) * (0.6 + Math.random() * 1.6); p.r = Math.max(p.r, 3.2); }
     } else { p.r += 0.1 * fr; p.vx *= 0.97; p.y -= 0.12 * fr; }
-    if (S.playing && !S.crashed) p.x -= S.speed * (p.ground ? 1 : 0.1) * fr;
+    if (S.playing && !S.crashed) p.x -= S.speed * SPEED_SCALE * (p.ground ? 1 : 0.1) * fr;
   });
   S.smoke = S.smoke.filter(p => p.age < p.life);
   S.boom.forEach(p => { p.age += dt; if (!p.ring) { p.x += p.vx * fr; p.y += p.vy * fr; p.vy += 0.15 * fr; p.vx *= 0.99; } });
@@ -790,7 +828,7 @@ function update(dt) {
   if (!S.playing || S.crashed) return;
   S.runningTime += dt; S.zoneTime += dt; if (S.grace > 0) S.grace -= dt;
   const hasObstacles = S.runningTime > CFG.CLEAR_TIME;
-  const inc = Math.floor(S.speed * (FPS / 1000) * dt);
+  const inc = Math.floor(S.speed * SPEED_SCALE * (FPS / 1000) * dt);
 
   // suelo
   S.groundX[0] -= inc; S.groundX[1] -= inc;
@@ -798,7 +836,7 @@ function update(dt) {
 
   // nubes
   S.cloudTimer += dt;
-  S.clouds.forEach(cl => cl.x -= CFG.BG_CLOUD_SPEED * dt * FPS / 1000 * S.speed);
+  S.clouds.forEach(cl => cl.x -= CFG.BG_CLOUD_SPEED * dt * FPS / 1000 * S.speed * SPEED_SCALE);
   S.clouds = S.clouds.filter(cl => cl.x + 46 > 0);
   const last = S.clouds[S.clouds.length - 1];
   if (S.clouds.length < CFG.MAX_CLOUDS && (!last || (W - last.x > last.gap)) && CFG.CLOUD_FREQUENCY > Math.random())
@@ -811,7 +849,7 @@ function update(dt) {
     if (S.rampPending && !S.car.jumping && !S.obstacles.some(o => o.x + o.width > S.car.x)) { S.rampPending = false; startRamp(); }
     if (hasObstacles) {
       S.obstacles.forEach(o => {
-        o.x -= Math.floor((S.speed + (o.off || 0)) * (FPS / 1000) * dt);
+        o.x -= Math.floor((S.speed + (o.off || 0)) * SPEED_SCALE * (FPS / 1000) * dt);
         if (o.type === 'ROCKET') { o.frameT += dt; if (o.frameT >= 1000 / 6) { o.frameT = 0; o.frame ^= 1; } }
       });
       S.obstacles = S.obstacles.filter(o => o.x + o.width > 0);
@@ -855,15 +893,15 @@ function drawRampTrack() {
   const k = P0 * 0.55, slide = r.t < k ? (1 - ease(r.t / k)) * 240 : 0;   // la rampa entra desde la derecha
   ctx.save(); ctx.translate(slide, 0);
   ctx.strokeStyle = COLOR; ctx.lineWidth = 3;
-  ctx.beginPath(); ctx.ellipse(RAMP_CX, RAMP_CYC, RAMP_RX + 1.5, RAMP_RY + 1.5, 0, Math.PI / 2, -Math.PI / 2, true); ctx.stroke();
-  ctx.fillStyle = COLOR; ctx.fillRect(RAMP_CX - RUN_LEN - 10, CEIL_Y - 3, RUN_LEN + 10, 3);   // viga del techo
+  ctx.beginPath(); ctx.ellipse(rampCX(), RAMP_CYC, RAMP_RX + 1.5, RAMP_RY + 1.5, 0, Math.PI / 2, -Math.PI / 2, true); ctx.stroke();
+  ctx.fillStyle = COLOR; ctx.fillRect(rampCX() - RUN_LEN - 10, CEIL_Y - 3, RUN_LEN + 10, 3);   // viga del techo
   ctx.lineWidth = 1;
   for (let a = 0.1; a < Math.PI; a += 0.1) {                                                     // costillas exteriores
-    const px = RAMP_CX + Math.sin(a) * (RAMP_RX + 3.5), py = RAMP_CYC + Math.cos(a) * (RAMP_RY + 3.5);
+    const px = rampCX() + Math.sin(a) * (RAMP_RX + 3.5), py = RAMP_CYC + Math.cos(a) * (RAMP_RY + 3.5);
     const nx = Math.sin(a) / RAMP_RX, ny = Math.cos(a) / RAMP_RY, nl = Math.hypot(nx, ny);
     ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px + nx / nl * 4, py + ny / nl * 4); ctx.stroke();
   }
-  for (let x = RAMP_CX - RUN_LEN; x < RAMP_CX; x += 14) { ctx.beginPath(); ctx.moveTo(x, CEIL_Y - 3); ctx.lineTo(x - 4, CEIL_Y - 8); ctx.stroke(); }
+  for (let x = rampCX() - RUN_LEN; x < rampCX(); x += 14) { ctx.beginPath(); ctx.moveTo(x, CEIL_Y - 3); ctx.lineTo(x - 4, CEIL_Y - 8); ctx.stroke(); }
   ctx.restore();
 }
 
@@ -967,7 +1005,7 @@ function loop(now) {
   requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
-if (qs.has('debug')) window.T = { update, render, S, addObstacle, startJump, press: () => press(), release: () => release(), pressUp: () => pressUp(), showOver, gameOver, skipToRamp, makeShareImage, saveScore, shareScore };
+if (qs.has('debug')) window.T = { update, render, S, addObstacle, startJump, press: () => press(), release: () => release(), pressUp: () => pressUp(), showOver, gameOver, skipToRamp, makeShareImage, saveScore, shareScore, layoutInfo: () => ({ W, SPEED_SCALE }) };
 
 /* ===== Input ===== */
 function tryRestart() {
@@ -1143,12 +1181,14 @@ const I18N = {
   ca: 'He aconseguit {n} punts a Tesla Runner! 🚗🚀 Em pots superar?',
 };
 const userLang = () => { const l = ((navigator.languages && navigator.languages[0]) || navigator.language || 'en').slice(0, 2).toLowerCase(); return I18N[l] ? l : 'en'; };
+const CARD_V = 2;   // súbelo cuando cambie la imagen de la tarjeta: X guarda las tarjetas en caché por URL
 function shareScore() {
   const text = I18N[userLang()].replace('{n}', finalScore);
-  const pageUrl = location.protocol.startsWith('http') && !/^(localhost|127\.)/.test(location.hostname) ? location.href.split('?')[0] : '';
+  const pageUrl = location.protocol.startsWith('http') && !/^(localhost|127\.)/.test(location.hostname) ? location.href.split('?')[0] + '?v=' + CARD_V : '';
   let u = 'https://x.com/intent/post?text=' + encodeURIComponent(text) + '&hashtags=TeslaRunner';
   if (pageUrl) u += '&url=' + encodeURIComponent(pageUrl);
-  window.open(u, '_blank', 'noopener');
+  const w = window.open(u, '_blank');          // en el navegador integrado de X puede no abrirse una pestaña: se navega en la misma
+  if (w) w.opener = null; else location.href = u;
 }
 
 // Genera og-image.png (1200x630): el Roadster flotando sobre una fila de coches con gas frío, un Starship acercándose a lo lejos
@@ -1196,8 +1236,26 @@ $('nameForm').addEventListener('submit', e => { e.preventDefault(); saveScore();
 $('shareBtn').addEventListener('click', shareScore);
 $('closeBtn').addEventListener('click', hideOver);
 document.addEventListener('keydown', e => { if (e.code === 'Escape' && !$('over').hidden) { e.preventDefault(); hideOver(); } });
-canvas.addEventListener('pointerdown', e => { e.preventDefault(); press(); });
-window.addEventListener('pointerup', release);
+// Toca en cualquier sitio = saltar; mantener = propulsión. Se sigue UN puntero para que otro dedo (botones de piruetas) no corte la propulsión.
+let jumpPointer = null;
+const isUi = t => !!(t && t.closest && t.closest('#over, .tbtn, button, input, a'));
+document.addEventListener('pointerdown', e => {
+  if (isUi(e.target) || jumpPointer !== null) return;
+  if (e.pointerType === 'mouse' && e.button !== 0) return;
+  e.preventDefault(); jumpPointer = e.pointerId; press();
+});
+const endPointer = e => { if (e.pointerId === jumpPointer) { jumpPointer = null; release(); } };
+window.addEventListener('pointerup', endPointer);
+window.addEventListener('pointercancel', endPointer);
+// Botones táctiles: reutilizan los mismos eventos de teclado (un toque = una vuelta; mantener = vueltas seguidas)
+document.querySelectorAll('.tbtn').forEach(b => {
+  const code = b.dataset.k; let down = false;
+  const fire = d => document.dispatchEvent(new KeyboardEvent(d ? 'keydown' : 'keyup', { code, key: code, bubbles: true, cancelable: true }));
+  b.addEventListener('pointerdown', e => { e.preventDefault(); if (down) return; down = true; try { b.setPointerCapture(e.pointerId); } catch (err) {} fire(true); });
+  const up = () => { if (!down) return; down = false; fire(false); };
+  b.addEventListener('pointerup', up); b.addEventListener('pointercancel', up); b.addEventListener('lostpointercapture', up);
+});
+document.addEventListener('contextmenu', e => { if (!(e.target && e.target.tagName === 'INPUT')) e.preventDefault(); });   // sin menú al mantener pulsado
 window.addEventListener('blur', () => { release(); S.keys = {}; S.upLock = false; });
 })();
 </script>
