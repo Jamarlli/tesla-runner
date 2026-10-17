@@ -1,5 +1,9 @@
 # 🚗💨 Tesla Runner
 
+**▶ [Juega ahora](https://jamarlli.github.io/tesla-runner/)** · funciona en escritorio y en móvil (toca, mantén, desliza)
+
+[![Tesla Runner: el Roadster flotando sobre una fila de coches, con un Starship acercándose](og-image-2.png)](https://jamarlli.github.io/tesla-runner/)
+
 El juego del dinosaurio de Chrome, pero con un **Tesla Roadster** que se propulsa con gas frío. Un solo archivo HTML (`index.html`), sin dependencias, y un servidor opcional de 100 líneas para el leaderboard.
 
 - Salta cochazos, camiones y minicohetes Starship.
