@@ -20,7 +20,7 @@ El juego del dinosaurio de Chrome, pero con un **Tesla Roadster** que se propuls
 | `INTRO` | Atajo de pruebas: salta a 10 puntos de la siguiente rampa |
 | `ESPACIO` en el game over | Vuelve a jugar al instante. Si ya has empezado a escribir tu nombre para el TOP 100, el espacio es un espacio del nombre; `INTRO` lo guarda |
 
-**En móvil / táctil** (también funciona en el navegador integrado de X): toca en cualquier parte para saltar y mantén el dedo para propulsarte. Debajo hay botones grandes para las piruetas: **FLIPS** (◀ ▶) y **ROLL** (▲ ▼); puedes pulsarlos con el otro pulgar sin soltar la propulsión. En pantallas estrechas el juego usa un ancho lógico menor (360-600 px) para verse a tamaño real y reduce la velocidad del scroll, como hace el T-Rex original.
+**En móvil / táctil** (también en el navegador integrado de X): **toca** en cualquier parte para saltar, **mantén** el dedo para el turbo (propulsión) y **desliza** para las piruetas: izquierda/derecha = flips, arriba/abajo = barrel roll. Un deslizamiento rápido da una vuelta; si dejas el dedo desplazado sigue girando hasta que lo recoges. En pantallas estrechas el juego usa un ancho lógico menor (360-600 px) para verse a tamaño real y reduce la velocidad del scroll, como hace el T-Rex original.
 
 ## Jugar en local
 
