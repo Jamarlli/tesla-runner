@@ -7,6 +7,7 @@ El juego del dinosaurio de Chrome, pero con un **Tesla Roadster** que se propuls
 - Cada ~271 puntos aparece una **rampa gigante**: te lleva boca abajo por el techo y tienes que girar en el aire para caer sobre las ruedas.
 - Flips, barrel rolls y combos suman puntos. Aterriza mal y explotas.
 - Leaderboard TOP 100 guardado en un archivo (`scores.json`).
+- Botón **Compartir en X**: texto en el idioma del navegador y una imagen con tu puntuación (en móvil se adjunta sola; en escritorio se copia al portapapeles para pegarla en el tuit).
 
 ## Controles
 
@@ -17,6 +18,7 @@ El juego del dinosaurio de Chrome, pero con un **Tesla Roadster** que se propuls
 | `←` `→` | Flips en el aire (un toque = 1 vuelta; mantenido = vueltas seguidas; al soltar termina la vuelta) |
 | `↓` | Barrel roll en sentido contrario |
 | `INTRO` | Atajo de pruebas: salta a 10 puntos de la siguiente rampa |
+| `ESPACIO` en el game over | Vuelve a jugar al instante (si has escrito tu nombre para el TOP 100, lo guarda antes) |
 
 En móvil: toca la pantalla para saltar y mantén para propulsarte.
 

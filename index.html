@@ -4,6 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
 <title>Tesla Runner</title>
+<meta name="description" content="El juego del dinosaurio de Chrome con un Tesla Roadster propulsado por gas frío.">
+<meta property="og:title" content="Tesla Runner">
+<meta property="og:description" content="El juego del dinosaurio de Chrome con un Tesla Roadster propulsado por gas frío.">
+<meta property="og:image" content="https://jamarlli.github.io/tesla-runner/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
 <script>
   // URL del servidor del leaderboard (déjalo vacío si sirves el juego con server.js). Ejemplo: 'https://tesla-runner.fly.dev'
   window.TESLA_RUNNER_API = '';
@@ -14,26 +19,35 @@
   #wrap { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; }
   canvas { width: min(calc(100vw - 32px), 900px); aspect-ratio: 600 / 150; display: block; transition: filter 1s; touch-action: none; }
   canvas.inverted { filter: invert(1); }
-  #over { width: min(calc(100vw - 32px), 900px); margin-top: 18px; font: 13px 'Courier New', monospace; color: #535353; transition: color 1s; }
+  /* Zona inferior: los controles y, al morir, el leaderboard ocupan el MISMO hueco (el juego no se mueve) */
+  #under { position: relative; width: min(calc(100vw - 32px), 900px); min-height: 178px; margin-top: 18px; }
+  #over { position: absolute; top: 0; left: 0; right: 0; display: flex; gap: 40px; flex-wrap: wrap; justify-content: center; align-items: flex-start;
+          font: bold 12px 'Courier New', monospace; color: #535353; text-transform: uppercase; transition: color 1s; }
   #over[hidden], #over [hidden] { display: none !important; }
   body.night #over { color: #bbb; }
-  #over .top { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; justify-content: space-between; }
-  #over .sc { font-size: 15px; }
-  #over form { display: flex; gap: 8px; }
-  #over input { font: inherit; color: inherit; background: transparent; border: 2px solid currentColor; padding: 6px 8px; width: 170px; outline: none; text-transform: uppercase; }
-  #over button { font: inherit; font-weight: bold; color: inherit; background: transparent; border: 2px solid currentColor; padding: 6px 12px; cursor: pointer; }
-  #over button:hover:not(:disabled) { background: #535353; color: #fff; }
-  body.night #over button:hover:not(:disabled) { background: #bbb; color: #000; }
-  #over button:disabled { opacity: .5; cursor: default; }
-  #over h3 { margin: 16px 0 6px; font-size: 13px; letter-spacing: 3px; }
-  #board { list-style: none; margin: 0; padding: 0; columns: 2; column-gap: 32px; }
-  #board li { display: flex; gap: 8px; padding: 2px 0; border-bottom: 1px dotted #aaa; break-inside: avoid; }
-  #board li.me { font-weight: bold; background: rgba(83,83,83,.15); }
-  #board .rk { width: 28px; } #board .nm { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } #board .sc { text-align: right; }
-  #over .btns { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
-  #over .note { font-size: 11px; opacity: .7; margin-top: 8px; }
-  @media (max-width: 560px) { #board { columns: 1; } }
-  #hint { display: flex; gap: 34px; flex-wrap: wrap; justify-content: center; align-items: flex-start; margin-top: 22px; padding: 0 16px; font: 12px 'Courier New', monospace; color: #535353; transition: color 1s; }
+  #over .col { display: flex; flex-direction: column; gap: 9px; }
+  #over .ttl { letter-spacing: 7px; }
+  #board { list-style: none; margin: 0; padding: 0; columns: 2; column-gap: 28px; width: 380px; }
+  #board li { display: flex; gap: 6px; padding: 1px 4px; white-space: nowrap; break-inside: avoid; }
+  #board li.me { background: #535353; color: #fff; }
+  body.night #board li.me { background: #bbb; color: #000; }
+  #board .rk { width: 28px; text-align: right; } #board .nm { flex: 1; overflow: hidden; text-overflow: ellipsis; }
+  #over .act { min-width: 250px; align-items: flex-start; }
+  #over .pts { font-size: 15px; letter-spacing: 1px; }
+  #over .msg { min-height: 14px; }
+  #over form { display: flex; gap: 10px; align-items: flex-end; }
+  #over input { font: bold 15px 'Courier New', monospace; letter-spacing: 5px; color: inherit; background: transparent; border: 0; border-bottom: 2px solid currentColor;
+                width: 150px; padding: 3px 2px; outline: none; border-radius: 0; text-transform: uppercase; }
+  #over input::placeholder { opacity: .45; }
+  .kbtn { font: bold 12px 'Courier New', monospace; color: inherit; background: transparent; border: 2px solid currentColor; border-radius: 6px; padding: 6px 12px;
+          box-shadow: 0 3px 0 currentColor; cursor: pointer; text-transform: uppercase; }
+  .kbtn:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 0 0 currentColor; }
+  .kbtn:disabled { opacity: .5; cursor: default; }
+  #over .again { display: flex; gap: 10px; align-items: center; }
+  #over .note { font-size: 10px; opacity: .7; max-width: 380px; text-transform: none; }
+  #toast { font-size: 11px; text-transform: none; max-width: 300px; min-height: 13px; }
+  @media (max-width: 700px) { #board { columns: 1; width: auto; } #under { min-height: 330px; } }
+  #hint { display: flex; gap: 34px; flex-wrap: wrap; justify-content: center; align-items: flex-start; margin-top: 0; padding: 0 16px; font: 12px 'Courier New', monospace; color: #535353; transition: color 1s; }
   body.night #hint { color: #bbb; }
   #hint .grp { display: flex; flex-direction: column; align-items: center; gap: 8px; max-width: 220px; text-align: center; }
   #hint .lbl { line-height: 1.35; }
@@ -49,29 +63,32 @@
 <body>
 <div id="wrap">
   <canvas id="c"></canvas>
-  <div id="over" hidden>
-    <div class="top">
-      <div class="sc">PUNTUACIÓN <b id="finalScore">00000</b></div>
-      <div id="topMsg"></div>
-      <form id="nameForm" autocomplete="off">
-        <input id="nameInput" maxlength="12" placeholder="TU NOMBRE" spellcheck="false">
-        <button type="submit" id="saveBtn">GUARDAR</button>
-      </form>
-      <div id="saved" hidden>¡Puntuación guardada!</div>
-    </div>
-    <h3>LEADERBOARD</h3>
-    <ol id="board"></ol>
-    <div class="note" id="boardNote" hidden></div>
-    <div class="btns">
-      <button id="shareBtn" type="button">COMPARTIR EN X</button>
-      <button id="againBtn" type="button">JUGAR OTRA VEZ</button>
-    </div>
-  </div>
+  <div id="under">
   <div id="hint">
     <div class="grp"><span class="key wide" data-k="Space">ESPACIO</span><div class="lbl"><b>SALTAR</b><br>mantenlo en el aire = propulsión</div></div>
     <div class="grp"><div class="arrows"><span class="key" data-k="ArrowUp">↑︎</span><span class="key" data-k="ArrowLeft">←︎</span><span class="key" data-k="ArrowDown">↓︎</span><span class="key" data-k="ArrowRight">→︎</span></div>
       <div class="lbl"><b>PIRUETAS (en el aire)</b><br>←︎ →︎ flips · ↑︎ ↓︎ barrel roll<br>↑︎ también salta</div></div>
     <div class="grp"><span class="key wide" data-k="Enter">INTRO</span><div class="lbl"><b>ATAJO DE PRUEBAS</b><br>10 puntos antes de la rampa</div></div>
+  </div>
+    <div id="over" hidden>
+      <div class="col">
+        <div class="ttl">TOP 100</div>
+        <ol id="board"></ol>
+        <div class="note" id="boardNote" hidden></div>
+      </div>
+      <div class="col act">
+        <div class="pts">PUNTOS <b id="finalScore">00000</b></div>
+        <div class="msg" id="topMsg"></div>
+        <form id="nameForm" autocomplete="off" hidden>
+          <input id="nameInput" maxlength="12" placeholder="NOMBRE" spellcheck="false" autocomplete="off">
+          <button type="submit" id="saveBtn" class="kbtn">↵ GUARDAR</button>
+        </form>
+        <div class="msg" id="saved" hidden></div>
+        <button id="shareBtn" type="button" class="kbtn">COMPARTIR EN X</button>
+        <div id="toast"></div>
+        <div class="again"><span class="key wide" data-k="Space">ESPACIO</span><span>JUGAR OTRA VEZ</span></div>
+      </div>
+    </div>
   </div>
 </div>
 <script>
@@ -937,7 +954,7 @@ function loop(now) {
   requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
-if (qs.has('debug')) window.T = { update, render, S, addObstacle, startJump, press: () => press(), release: () => release(), pressUp: () => pressUp(), showOver, gameOver, skipToRamp };
+if (qs.has('debug')) window.T = { update, render, S, addObstacle, startJump, press: () => press(), release: () => release(), pressUp: () => pressUp(), showOver, gameOver, skipToRamp, makeShareImage, saveScore, shareScore };
 
 /* ===== Input ===== */
 function tryRestart() {
@@ -971,12 +988,17 @@ function skipToRamp() {
 }
 const ARROWS = { ArrowLeft: 'left', ArrowRight: 'right', ArrowDown: 'down' };
 // teclas visuales: se iluminan al pulsarlas
-const keyEl = c => document.querySelector('.key[data-k="' + c + '"]');
-document.addEventListener('keydown', e => { const el = keyEl(e.code); if (el) el.classList.add('on'); });
-document.addEventListener('keyup', e => { const el = keyEl(e.code); if (el) el.classList.remove('on'); });
+const keyEls = c => document.querySelectorAll('.key[data-k="' + c + '"]');
+document.addEventListener('keydown', e => keyEls(e.code).forEach(el => el.classList.add('on')));
+document.addEventListener('keyup', e => keyEls(e.code).forEach(el => el.classList.remove('on')));
 window.addEventListener('blur', () => document.querySelectorAll('.key.on').forEach(el => el.classList.remove('on')));
 const typing = e => e.target && /^(INPUT|TEXTAREA|BUTTON|SELECT)$/.test(e.target.tagName);
 document.addEventListener('keydown', e => {
+  const overOpen = S.crashed && !$('over').hidden;
+  // con el leaderboard abierto: ESPACIO vuelve a jugar siempre (guardando antes el nombre si lo has escrito)
+  if (overOpen && e.code === 'Space') { e.preventDefault(); if (!e.repeat) playAgainFromOver(); return; }
+  // las letras van solas al campo del nombre (sin tener que pulsar en él)
+  if (overOpen && !$('nameForm').hidden && e.target !== $('nameInput') && /^[a-z0-9]$/i.test(e.key) && !e.ctrlKey && !e.metaKey && !e.altKey) { $('nameInput').focus(); return; }
   if (typing(e)) return;
   if (e.code === 'Space') { e.preventDefault(); if (!e.repeat) press(); }
   else if (e.code === 'ArrowUp') { e.preventDefault(); if (!e.repeat) pressUp(); }
@@ -986,7 +1008,7 @@ document.addEventListener('keydown', e => {
       if (e.code === 'ArrowLeft') S.rotReq.lr = -1; else if (e.code === 'ArrowRight') S.rotReq.lr = 1; else S.rotReq.ud = -1;
     }
   }
-  else if (e.code === 'Enter') { e.preventDefault(); if (S.crashed) press(); else if (!e.repeat) skipToRamp(); }
+  else if (e.code === 'Enter') { e.preventDefault(); if (overOpen && wantsSave()) saveScore(); else if (S.crashed) press(); else if (!e.repeat) skipToRamp(); }
 });
 document.addEventListener('keyup', e => {
   if (typing(e) && e.code !== 'ArrowUp') return;
@@ -995,7 +1017,7 @@ document.addEventListener('keyup', e => {
   else if (ARROWS[e.code]) S.keys[ARROWS[e.code]] = false;
 });
 
-/* ===== Game over: nombre, leaderboard y compartir ===== */
+/* ===== Game over: leaderboard, nombre y compartir ===== */
 const $ = id => document.getElementById(id);
 // Leaderboard: con server.js es el mismo servidor ('/api/scores'). Si el juego está en un hosting estático (GitHub Pages...),
 // pon la URL de tu API en TESLA_RUNNER_API (arriba, en el <head>) o pásala con ?api=https://mi-api.example.com
@@ -1003,7 +1025,8 @@ const API_BASE = (new URLSearchParams(location.search).get('api') || window.TESL
 const API = API_BASE ? API_BASE + '/api/scores'
   : (location.protocol.startsWith('http') && !/\.github\.io$/.test(location.hostname) ? '/api/scores' : null);
 const LS_BOARD = 'teslaRunnerBoard', LS_NAME = 'teslaRunnerName';
-let finalScore = 0, boardNote = '';
+const TOP_N = 100;
+let finalScore = 0;
 
 async function fetchBoard() {
   if (API) { try { const r = await fetch(API, { cache: 'no-store' }); if (r.ok) return { list: await r.json(), shared: true }; } catch (e) {} }
@@ -1020,33 +1043,32 @@ async function postScore(name, sc) {
   const entry = { name, score: sc, date: Date.now() };
   try {
     const l = JSON.parse(localStorage.getItem(LS_BOARD) || '[]'); l.push(entry);
-    l.sort((a, b) => b.score - a.score || a.date - b.date); localStorage.setItem(LS_BOARD, JSON.stringify(l.slice(0, 100)));
+    l.sort((a, b) => b.score - a.score || a.date - b.date); localStorage.setItem(LS_BOARD, JSON.stringify(l.slice(0, TOP_N)));
   } catch (e) {}
   return entry;
 }
+const sameEntry = (a, b) => a && b && a.date === b.date && a.name === b.name && a.score === b.score;
 function renderBoard(list, mine) {
   const ol = $('board'); ol.textContent = '';
   const sorted = list.slice().sort((a, b) => b.score - a.score || a.date - b.date);
   const row = (e, rank) => {
     const li = document.createElement('li');
-    if (mine && e.date === mine.date && e.name === mine.name && e.score === mine.score) li.className = 'me';
-    [['rk', rank + '.'], ['nm', e.name], ['sc', pad(e.score)]].forEach(([c, t]) => { const sp = document.createElement('span'); sp.className = c; sp.textContent = t; li.appendChild(sp); });
+    if (sameEntry(e, mine)) li.className = 'me';
+    [['rk', rank + '.'], ['nm', e.name], ['pt', pad(e.score)]].forEach(([c, t]) => { const sp = document.createElement('span'); sp.className = c; sp.textContent = t; li.appendChild(sp); });
     ol.appendChild(li);
   };
   sorted.slice(0, 10).forEach((e, i) => row(e, i + 1));
   if (!sorted.length) { const li = document.createElement('li'); li.textContent = 'Aún no hay puntuaciones'; ol.appendChild(li); }
-  const idx = mine ? sorted.findIndex(e => e.date === mine.date && e.name === mine.name && e.score === mine.score) : -1;
+  const idx = mine ? sorted.findIndex(e => sameEntry(e, mine)) : -1;
   if (idx >= 10) row(sorted[idx], idx + 1);
 }
 async function refreshBoard(mine) {
   const { list, shared } = await fetchBoard();
   renderBoard(list, mine);
-  refreshBoard.last = list;
   const note = $('boardNote');
-  note.hidden = shared; note.textContent = shared ? '' : 'Modo local: este leaderboard solo existe en tu navegador. Despliega server.js para compartirlo (ver README).';
+  note.hidden = shared; note.textContent = shared ? '' : 'Modo local: este leaderboard solo existe en tu navegador (ver README para compartirlo).';
   return list;
 }
-const TOP_N = 100;
 // ¿esta puntuación entra en el TOP 100? (y en qué puesto)
 function topRank(list, sc) {
   const sorted = list.slice().sort((a, b) => b.score - a.score);
@@ -1054,43 +1076,118 @@ function topRank(list, sc) {
   if (sorted.length >= TOP_N && sc <= sorted[TOP_N - 1].score) return 0;
   return sorted.filter(e => e.score >= sc).length + 1;
 }
+
 async function showOver() {
   finalScore = score();
   $('finalScore').textContent = pad(finalScore);
-  $('nameForm').hidden = true; $('saved').hidden = true; $('saveBtn').disabled = false; $('topMsg').textContent = '';
+  $('nameForm').hidden = true; $('saved').hidden = true; $('saveBtn').disabled = false; $('topMsg').textContent = ''; $('toast').textContent = '';
   try { $('nameInput').value = localStorage.getItem(LS_NAME) || ''; } catch (e) {}
   $('over').hidden = false; $('hint').style.visibility = 'hidden';
   const list = await refreshBoard(null);
   if (!S.crashed) return;
   const rank = topRank(list, finalScore);
-  if (rank) {   // solo se pide el nombre si entra en el TOP 100
-    $('topMsg').textContent = '¡Puesto ' + rank + ' del TOP ' + TOP_N + '! Guarda tu nombre:';
-    $('nameForm').hidden = false; $('nameInput').focus(); $('nameInput').select();
-  } else if (finalScore > 0) $('topMsg').textContent = 'No has llegado al TOP ' + TOP_N + ' (mínimo para entrar: ' + (list.length >= TOP_N ? pad(Math.max(...list.slice().sort((a, b) => b.score - a.score).slice(TOP_N - 1, TOP_N).map(e => e.score)) + 1) : '00001') + ')';
+  if (rank) {   // solo se pide el nombre si entra en el TOP 100; el campo NO roba el foco: escribe y las letras entran solas
+    $('topMsg').textContent = '¡Puesto ' + rank + ' del TOP ' + TOP_N + '! Escribe tu nombre';
+    $('nameForm').hidden = false;
+  } else if (finalScore > 0) {
+    const min = list.length >= TOP_N ? list.slice().sort((a, b) => b.score - a.score)[TOP_N - 1].score + 1 : 1;
+    $('topMsg').textContent = 'Fuera del TOP ' + TOP_N + ' (mínimo ' + pad(min) + ')';
+  }
 }
 function hideOver() {
   $('over').hidden = true; $('hint').style.visibility = 'visible';
   if (document.activeElement && document.activeElement !== document.body) document.activeElement.blur();
 }
-$('nameForm').addEventListener('submit', async e => {
-  e.preventDefault();
-  const name = $('nameInput').value.replace(/[<>]/g, '').trim().slice(0, 12).toUpperCase() || 'ANÓNIMO';
+const wantsSave = () => !$('over').hidden && !$('nameForm').hidden && !$('saveBtn').disabled && $('nameInput').value.trim().length > 0;
+async function saveScore() {
+  if ($('saveBtn').disabled) return;
+  const name = $('nameInput').value.replace(/[<>]/g, '').trim().slice(0, 12).toUpperCase() || 'ANÓNIMO', sc = finalScore;
   try { localStorage.setItem(LS_NAME, name); } catch (err) {}
   $('saveBtn').disabled = true;
-  const entry = await postScore(name, finalScore);
+  const entry = await postScore(name, sc);
+  if (sc !== finalScore || $('over').hidden) return;       // ya empezó otra partida
   $('nameForm').hidden = true;
-  if (!entry) { $('topMsg').textContent = 'No has llegado al TOP ' + TOP_N + '.'; await refreshBoard(null); return; }
-  $('topMsg').textContent = ''; $('saved').hidden = false;
+  if (!entry) { $('topMsg').textContent = 'Fuera del TOP ' + TOP_N; await refreshBoard(null); return; }
+  $('topMsg').textContent = ''; $('saved').hidden = false; $('saved').textContent = '¡Guardado!';
   await refreshBoard(entry);
-  if (document.activeElement) document.activeElement.blur();
-});
-$('shareBtn').addEventListener('click', () => {
-  const text = 'He conseguido ' + finalScore + ' puntos en Tesla Runner 🚗🚀 ¿Me superas?';
-  let u = 'https://x.com/intent/post?text=' + encodeURIComponent(text);
-  if (location.protocol.startsWith('http') && !/^(localhost|127\.)/.test(location.hostname)) u += '&url=' + encodeURIComponent(location.href.split('?')[0]);
-  window.open(u, '_blank', 'noopener');
-});
-$('againBtn').addEventListener('click', () => { reset(); hideOver(); });
+}
+// Espacio con el panel abierto: guarda el nombre (si lo has escrito) y vuelve a jugar
+function playAgainFromOver() { if (wantsSave()) saveScore(); press(); }
+
+/* ----- Compartir en X: texto en el idioma del navegador + imagen de la demo con tu puntuación ----- */
+const I18N = {
+  es: { text: '¡He conseguido {n} puntos en Tesla Runner! 🚗🚀 ¿Me superas?', copied: 'Imagen copiada: pégala con Ctrl+V en el tuit', saved: 'Imagen descargada: adjúntala al tuit' },
+  en: { text: 'I scored {n} points in Tesla Runner! 🚗🚀 Can you beat me?', copied: 'Image copied: paste it with Ctrl+V in the tweet', saved: 'Image downloaded: attach it to your tweet' },
+  fr: { text: "J'ai marqué {n} points sur Tesla Runner ! 🚗🚀 Tu peux faire mieux ?", copied: 'Image copiée : colle-la avec Ctrl+V dans le tweet', saved: 'Image téléchargée : joins-la au tweet' },
+  de: { text: 'Ich habe {n} Punkte bei Tesla Runner erreicht! 🚗🚀 Schaffst du mehr?', copied: 'Bild kopiert: mit Strg+V in den Tweet einfügen', saved: 'Bild heruntergeladen: an den Tweet anhängen' },
+  pt: { text: 'Fiz {n} pontos no Tesla Runner! 🚗🚀 Consegues superar-me?', copied: 'Imagem copiada: cola com Ctrl+V no tweet', saved: 'Imagem descarregada: anexa ao tweet' },
+  it: { text: 'Ho fatto {n} punti a Tesla Runner! 🚗🚀 Riesci a battermi?', copied: 'Immagine copiata: incollala con Ctrl+V nel tweet', saved: 'Immagine scaricata: allegala al tweet' },
+  ca: { text: 'He aconseguit {n} punts a Tesla Runner! 🚗🚀 Em pots superar?', copied: 'Imatge copiada: enganxa-la amb Ctrl+V al tuit', saved: 'Imatge descarregada: adjunta-la al tuit' },
+};
+const userLang = () => { const l = ((navigator.languages && navigator.languages[0]) || navigator.language || 'en').slice(0, 2).toLowerCase(); return I18N[l] ? l : 'en'; };
+
+// Imagen 1200x630 imitando la demo: el Roadster flotando sobre una fila de coches con gas frío, un Starship acercándose a lo lejos
+// y la puntuación en la esquina superior derecha (como en el juego). Con sc = null no pone puntuación (imagen para la tarjeta del enlace).
+function makeShareImage(sc) {
+  const c = document.createElement('canvas'); c.width = 1200; c.height = 630; const g = c.getContext('2d');
+  g.imageSmoothingEnabled = false; g.fillStyle = '#fff'; g.fillRect(0, 0, 1200, 630);
+  const U = 4, gy = 548;
+  // suelo
+  g.fillStyle = COLOR; g.fillRect(0, gy, 1200, 4); g.drawImage(groundTex, 0, 2, 600, 10, 0, gy + 4, 1200, 40);
+  // fila de coches (como en la presentación)
+  const lineup = ['SEMI', 'M3', 'MY', 'CT', 'CC'], boxes = []; let x = 150;
+  lineup.forEach(k => { const s = front(k); g.drawImage(s, x, gy - s.height * U, s.width * U, s.height * U); boxes.push([x, x + s.width * U, gy - s.height * U]); x += s.width * U + 26; });
+  const topAt = px => { const b = boxes.find(q => px >= q[0] && px <= q[1]); return b ? b[2] : gy; };
+  // Roadster flotando, ligeramente inclinado
+  const R = 5, cx = 540, cy = 232, ang = -0.1;
+  const nz = [CAR_W * 0.3, CAR_W * 0.5, CAR_W * 0.7].map(nx => {
+    const lx = (nx - CAR_W / 2) * R, ly = (18 - CAR_H / 2) * R;
+    return [cx + lx * Math.cos(ang) - ly * Math.sin(ang), cy + lx * Math.sin(ang) + ly * Math.cos(ang)];
+  });
+  // gas frío de los tres propulsores
+  g.fillStyle = COLOR;
+  nz.forEach(([nx, ny], k) => {
+    const end = topAt(nx) - 6, len = Math.max(40, end - ny);
+    for (let i = 0; i <= 30; i++) {
+      const t = i / 30; g.globalAlpha = 0.5 * (1 - t * 0.55);
+      g.beginPath(); g.arc(nx + Math.sin(i * 1.7 + k * 2) * 4 * t, ny + t * len, 5 + t * 24, 0, 7); g.fill();
+    }
+    g.globalAlpha = 0.3; g.beginPath(); g.arc(nx - 10, end, 34, 0, 7); g.arc(nx + 14, end + 2, 28, 0, 7); g.fill();
+  });
+  g.globalAlpha = 1;
+  g.save(); g.translate(cx, cy); g.rotate(ang); g.scale(R, R);
+  g.drawImage(roadBodySprite({ crashed: false, blink: false }), -CAR_W / 2, -CAR_H / 2);
+  WHEELS.forEach(w => g.drawImage(wheelFrame(1), Math.round(w[0] - 6.5) - CAR_W / 2, Math.round(w[1] - 6.5) - CAR_H / 2));
+  g.restore();
+  // Starship acercándose a lo lejos (más pequeño y más tenue)
+  g.globalAlpha = 0.7; g.drawImage(rocketSprite(0), 900, 118, 52 * 3, 19 * 3); g.globalAlpha = 1;
+  // textos
+  g.fillStyle = COLOR; g.textBaseline = 'top';
+  g.font = "bold 30px 'Courier New', monospace"; g.textAlign = 'left'; g.fillText('T E S L A   R U N N E R', 44, 40);
+  if (sc != null) { g.font = "bold 54px 'Courier New', monospace"; g.textAlign = 'right'; g.fillText(pad(sc), 1156, 34); }
+  return c;
+}
+async function shareScore() {
+  const L = I18N[userLang()], sc = finalScore, text = L.text.replace('{n}', sc);
+  const pageUrl = location.protocol.startsWith('http') && !/^(localhost|127\.)/.test(location.hostname) ? location.href.split('?')[0] : '';
+  const btn = $('shareBtn'); btn.disabled = true;
+  try {
+    const blob = await new Promise(r => makeShareImage(sc).toBlob(r, 'image/png'));
+    const file = new File([blob], 'tesla-runner.png', { type: 'image/png' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {          // móvil: hoja de compartir con la imagen adjunta
+      try { await navigator.share({ text: text + (pageUrl ? ' ' + pageUrl : ''), files: [file] }); return; } catch (e) { if (e && e.name === 'AbortError') return; }
+    }
+    let copied = false;                                                          // escritorio: imagen al portapapeles + ventana de X
+    try { await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]); copied = true; } catch (e) {}
+    if (!copied) { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'tesla-runner.png'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); }
+    $('toast').textContent = copied ? L.copied : L.saved;
+    let u = 'https://x.com/intent/post?text=' + encodeURIComponent(text) + '&hashtags=TeslaRunner';
+    if (pageUrl) u += '&url=' + encodeURIComponent(pageUrl);
+    window.open(u, '_blank', 'noopener');
+  } finally { btn.disabled = false; }
+}
+$('nameForm').addEventListener('submit', e => { e.preventDefault(); saveScore(); });
+$('shareBtn').addEventListener('click', shareScore);
 canvas.addEventListener('pointerdown', e => { e.preventDefault(); press(); });
 window.addEventListener('pointerup', release);
 window.addEventListener('blur', () => { release(); S.keys = {}; S.upLock = false; });
