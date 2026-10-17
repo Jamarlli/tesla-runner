@@ -25,11 +25,11 @@
   window.TESLA_RUNNER_API = 'https://tesla-runner-api.paper-jev.workers.dev';
 </script>
 <style>
-  html, body { margin: 0; min-height: 100%; background: #fff; transition: background 1s; overscroll-behavior: none; touch-action: none;
+  html, body { margin: 0; min-height: 100%; background: #fff; transition: background 1s; touch-action: pan-y;
                -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
   input { -webkit-user-select: text; user-select: text; }
   body.night { background: #000; }
-  #wrap { min-height: 100vh; min-height: 100dvh; box-sizing: border-box; padding: 8px 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  #wrap { touch-action: none; min-height: 100vh; min-height: 100dvh; box-sizing: border-box; padding: 8px 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
   canvas { display: block; max-width: 100%; transition: filter 1s; touch-action: none; }   /* el tamaño lo fija layout() según la pantalla */
   canvas.inverted { filter: invert(1); }
   /* Controles: pequeños y discretos (no se iluminan) */
@@ -47,6 +47,10 @@
   .ar { display: block; width: 0; height: 0; border-style: solid; border-color: transparent; }
   .ar.u { border-width: 0 4px 6px 4px; border-bottom-color: currentColor; } .ar.d { border-width: 6px 4px 0 4px; border-top-color: currentColor; }
   .ar.l { border-width: 4px 6px 4px 0; border-right-color: currentColor; } .ar.r { border-width: 4px 0 4px 6px; border-left-color: currentColor; }
+
+  /* Franja superior (solo táctil): los gestos aquí son del navegador, p. ej. deslizar hacia abajo para refrescar. El juego no los coge. */
+  #pull { display: none; position: fixed; top: 0; left: 0; right: 0; height: max(64px, 14vh); z-index: 5; touch-action: pan-y; }
+  @media (pointer: coarse) { #pull { display: block; } }
 
   /* Móvil / táctil: sin teclas ni botones. Toca = saltar, mantén = turbo, desliza = piruetas */
   #touch { display: none; width: 100%; max-width: 900px; box-sizing: border-box; padding: 0 10px; justify-content: center; text-align: center;
@@ -101,24 +105,25 @@
     <div class="grp"><span class="key wide" data-k="Enter">INTRO</span><div class="lbl"><b>ATAJO DE PRUEBAS</b><br>10 puntos antes de la rampa</div></div>
   </div>
     <div id="touch"><div><b>TOCA</b> = SALTAR &middot; <b>MANTÉN</b> = TURBO<br><b>DESLIZA</b> <i class="ar l"></i><i class="ar r"></i> = FLIPS &middot; <i class="ar u"></i><i class="ar d"></i> = ROLL</div></div>
-    <div id="over" hidden role="dialog" aria-label="Leaderboard">
-      <button class="x" id="closeBtn" type="button" title="Cerrar (Esc)">✕</button>
-      <div class="head"><span class="ttl">TOP 100</span><span class="pts">PUNTOS <b id="finalScore">00000</b></span></div>
-      <ol id="board"></ol>
-      <div class="note" id="boardNote" hidden></div>
-      <div class="msg" id="topMsg"></div>
-      <form id="nameForm" autocomplete="off" hidden>
-        <input id="nameInput" maxlength="12" placeholder="NOMBRE" spellcheck="false" autocomplete="off">
-        <button type="submit" id="saveBtn" class="kbtn">↵ GUARDAR</button>
-      </form>
-      <div class="msg" id="saved" hidden></div>
-      <div class="foot">
-        <button id="shareBtn" type="button" class="kbtn">COMPARTIR EN X</button>
-        <div class="again"><span class="key wide" data-k="Space">ESPACIO</span><span>JUGAR OTRA VEZ</span></div>
-      </div>
-    </div>
   </div>
 </div>
+  <div id="over" hidden role="dialog" aria-label="Leaderboard">
+    <button class="x" id="closeBtn" type="button" title="Cerrar (Esc)">✕</button>
+    <div class="head"><span class="ttl">TOP 100</span><span class="pts">PUNTOS <b id="finalScore">00000</b></span></div>
+    <ol id="board"></ol>
+    <div class="note" id="boardNote" hidden></div>
+    <div class="msg" id="topMsg"></div>
+    <form id="nameForm" autocomplete="off" hidden>
+      <input id="nameInput" maxlength="12" placeholder="NOMBRE" spellcheck="false" autocomplete="off">
+      <button type="submit" id="saveBtn" class="kbtn">↵ GUARDAR</button>
+    </form>
+    <div class="msg" id="saved" hidden></div>
+    <div class="foot">
+      <button id="shareBtn" type="button" class="kbtn">COMPARTIR EN X</button>
+      <div class="again"><span class="key wide" data-k="Space">ESPACIO</span><span>JUGAR OTRA VEZ</span></div>
+    </div>
+  </div>
+<div id="pull"></div>
 <script>
 (() => {
 'use strict';
@@ -1232,7 +1237,7 @@ document.addEventListener('keydown', e => { if (e.code === 'Escape' && !$('over'
 let jumpPointer = null, sw = null;
 const SWIPE = 26;   // píxeles CSS para detectar un deslizamiento
 const fireKey = (code, down) => document.dispatchEvent(new KeyboardEvent(down ? 'keydown' : 'keyup', { code, key: code, bubbles: true, cancelable: true }));
-const isUi = t => !!(t && t.closest && t.closest('#over, button, input, a'));
+const isUi = t => !!(t && t.closest && t.closest('#over, #pull, button, input, a'));   // #pull: franja superior reservada al navegador (refrescar)
 document.addEventListener('pointerdown', e => {
   if (isUi(e.target) || jumpPointer !== null) return;
   if (e.pointerType === 'mouse' && e.button !== 0) return;
