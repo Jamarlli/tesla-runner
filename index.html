@@ -86,6 +86,7 @@
           box-shadow: 0 2px 0 currentColor; cursor: pointer; text-transform: uppercase; }
   .kbtn:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 0 0 currentColor; }
   .kbtn:disabled { opacity: .5; cursor: default; }
+  .kbtn .xlogo { width: 1.25em; height: 1.25em; fill: currentColor; vertical-align: -0.28em; margin-left: 2px; }
   #over .foot { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
   #over .again { display: flex; gap: 8px; align-items: center; font-size: 10px; }
   #over .note { font-size: 10px; opacity: .7; text-transform: none; }
@@ -119,7 +120,7 @@
     </form>
     <div class="msg" id="saved" hidden></div>
     <div class="foot">
-      <button id="shareBtn" type="button" class="kbtn">COMPARTIR EN X</button>
+      <button id="shareBtn" type="button" class="kbtn" aria-label="Compartir en X">COMPARTIR EN <svg class="xlogo" viewBox="0 0 24 24" aria-hidden="true"><path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z"/></svg></button>
       <div class="again"><span class="key wide" data-k="Space">ESPACIO</span><span>JUGAR OTRA VEZ</span></div>
     </div>
   </div>
