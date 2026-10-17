@@ -21,7 +21,7 @@
 <meta name="twitter:image" content="https://jamarlli.github.io/tesla-runner/og-image-2.png">
 <script>
   // API del leaderboard cuando el juego está en GitHub Pages (Worker de Cloudflare que guarda el TOP 100 en la rama "leaderboard" del repo).
-  // En local (localhost) se usa siempre server.js; con ?api=https://... se puede probar otro servidor.
+  // En local (localhost) se usa siempre server.js.
   window.TESLA_RUNNER_API = 'https://tesla-runner-api.paper-jev.workers.dev';
 </script>
 <style>
@@ -103,7 +103,6 @@
     <div class="grp"><span class="key wide" data-k="Space">ESPACIO</span><div class="lbl"><b>SALTAR</b><br>mantenlo en el aire = propulsión</div></div>
     <div class="grp"><div class="arrows"><span class="key" data-k="ArrowUp"><i class="ar u"></i></span><span class="key" data-k="ArrowLeft"><i class="ar l"></i></span><span class="key" data-k="ArrowDown"><i class="ar d"></i></span><span class="key" data-k="ArrowRight"><i class="ar r"></i></span></div>
       <div class="lbl"><b>PIRUETAS (en el aire)</b><br>izq / der = flips<br>arriba / abajo = barrel roll<br>(arriba también salta)</div></div>
-    <div class="grp"><span class="key wide" data-k="Enter">INTRO</span><div class="lbl"><b>ATAJO DE PRUEBAS</b><br>10 puntos antes de la rampa</div></div>
   </div>
     <div id="touch"><div><b>TOCA</b> = SALTAR &middot; <b>MANTÉN</b> = TURBO<br><b>DESLIZA</b> <i class="ar l"></i><i class="ar r"></i> = FLIPS &middot; <i class="ar u"></i><i class="ar d"></i> = ROLL</div></div>
   </div>
@@ -559,8 +558,7 @@ const groundTex = document.createElement('canvas'); groundTex.width = 1200; grou
 })();
 
 /* ===== Estado ===== */
-const qs = new URLSearchParams(location.search);
-const RAMP_DIST = +qs.get('ramp') || 271;            // puntos de distancia recorridos en el suelo hasta la siguiente rampa
+const RAMP_DIST = 271;            // puntos de distancia recorridos en el suelo hasta la siguiente rampa
 // Rampa: 1) el coche acelera hasta la rampa (P0)  2) sube por el arco (P1)  3) corre boca abajo por el techo (P2)  4) cae
 // La rampa es mucho más alta que la pantalla: se hace zoom out para verlo todo (y el suelo) y la caída dura casi un segundo.
 const P0 = 650, P1 = 1300, P2 = 500, RUN_LEN = 150, RAMP_RX = 70, RAMP_RY = 150;
@@ -1001,7 +999,7 @@ function loop(now) {
   requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
-if (qs.has('debug')) window.T = { update, render, S, addObstacle, startJump, press: () => press(), release: () => release(), pressUp: () => pressUp(), showOver, gameOver, skipToRamp, makeShareImage, saveScore, shareScore, layoutInfo: () => ({ W, SPEED_SCALE }) };
+/*__TEST_HOOK__*/
 
 /* ===== Input ===== */
 function tryRestart() {
@@ -1023,15 +1021,6 @@ function pressUp() {
   if (S.crashed) { if (tryRestart()) { S.keys.up = true; S.upLock = true; startJump(); } return; }
   if (!S.playing) S.playing = S.activated = true;
   if (S.phase !== 'ramp' && !S.car.jumping) { startJump(); S.upLock = true; }
-}
-// Atajo de pruebas (Intro): salta a 10 puntos antes de la siguiente rampa
-function skipToRamp() {
-  if (S.phase !== 'ground') return;
-  if (!S.playing) S.playing = S.activated = true;
-  const target = (S.zoneDist + RAMP_DIST - 10) / 0.025;
-  if (S.distance < target) S.distance = target;
-  S.runningTime = Math.max(S.runningTime, CFG.CLEAR_TIME + 1);
-  S.popups.push({ text: 'INTRO: 10 ANTES DE LA RAMPA', age: 0 });
 }
 const ARROWS = { ArrowLeft: 'left', ArrowRight: 'right', ArrowDown: 'down' };
 // teclas visuales: se iluminan al pulsarlas
@@ -1058,7 +1047,7 @@ document.addEventListener('keydown', e => {
       if (e.code === 'ArrowLeft') S.rotReq.lr = -1; else if (e.code === 'ArrowRight') S.rotReq.lr = 1; else S.rotReq.ud = -1;
     }
   }
-  else if (e.code === 'Enter') { e.preventDefault(); if (overOpen && wantsSave()) saveScore(); else if (S.crashed) press(); else if (!e.repeat) skipToRamp(); }
+  else if (e.code === 'Enter') { e.preventDefault(); if (overOpen && wantsSave()) saveScore(); else if (S.crashed) press(); }
 });
 document.addEventListener('keyup', e => {
   if (typing(e) && e.code !== 'ArrowUp') return;
@@ -1070,8 +1059,8 @@ document.addEventListener('keyup', e => {
 /* ===== Game over: leaderboard, nombre y compartir ===== */
 const $ = id => document.getElementById(id);
 // Leaderboard: con server.js es el mismo servidor ('/api/scores'). Si el juego está en un hosting estático (GitHub Pages...),
-// pon la URL de tu API en TESLA_RUNNER_API (arriba, en el <head>) o pásala con ?api=https://mi-api.example.com
-const API_BASE = (new URLSearchParams(location.search).get('api') || (/^(localhost|127\.)/.test(location.hostname) ? '' : window.TESLA_RUNNER_API) || '').replace(/\/$/, '');
+// pon la URL de tu API en TESLA_RUNNER_API (arriba, en el <head>).
+const API_BASE = ((/^(localhost|127\.)/.test(location.hostname) ? '' : window.TESLA_RUNNER_API) || '').replace(/\/$/, '');
 const API = API_BASE ? API_BASE + '/api/scores'
   : (location.protocol.startsWith('http') && !/\.github\.io$/.test(location.hostname) ? '/api/scores' : null);
 const LS_BOARD = 'teslaRunnerBoard', LS_NAME = 'teslaRunnerName';
@@ -1189,7 +1178,7 @@ function shareScore() {
 
 // Genera og-image.png (1200x630): el Roadster flotando sobre una fila de coches con gas frío, un Starship acercándose a lo lejos
 // y el marcador arriba a la derecha como en el HUD del juego (HI = récord, y los puntos). Se usa como tarjeta del enlace;
-// se regenera con ?debug -> T.makeShareImage(99999, 99999)
+// se regenera llamando a makeShareImage(99999, 99999) desde un navegador de pruebas
 function makeShareImage(sc, hi) {
   const c = document.createElement('canvas'); c.width = 1200; c.height = 630; const g = c.getContext('2d');
   g.imageSmoothingEnabled = false; g.fillStyle = '#fff'; g.fillRect(0, 0, 1200, 630);

@@ -61,7 +61,7 @@ const server = http.createServer((req, res) => {
         let data; try { data = JSON.parse(body); } catch (e) { return send(res, 400, { error: 'JSON inválido' }); }
         const score = Math.floor(Number(data.score));
         const name = String(data.name || '').replace(/[\u0000-\u001f<>]/g, '').trim().slice(0, 12);
-        if (!name || !Number.isFinite(score) || score < 0 || score > 999999) return send(res, 400, { error: 'Datos no válidos' });
+        if (!name || !Number.isFinite(score) || score < 0 || score > 99999) return send(res, 400, { error: 'Datos no válidos' });
         const list = readScores();
         const sorted = top(list, MAX_ENTRIES);
         if (sorted.length >= MAX_ENTRIES && score <= sorted[MAX_ENTRIES - 1].score) return send(res, 403, { error: 'No entra en el TOP ' + MAX_ENTRIES });

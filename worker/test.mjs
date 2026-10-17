@@ -41,7 +41,7 @@ r = await post('Javi', 1234); assert.equal(r.status, 201); assert.equal(store.pu
 assert.deepEqual(JSON.parse(store.content).map(e => e.name), ['Javi']); ok('el archivo contiene la entrada');
 
 // 3) validaciones
-for (const [name, score] of [['', 5], ['x', -1], ['x', 9999999], ['x', 'abc']]) { r = await post(name, score); assert.equal(r.status, 400); } ok('entradas inválidas -> 400');
+for (const [name, score] of [['', 5], ['x', -1], ['x', 100000], ['x', 9999999], ['x', 'abc']]) { r = await post(name, score); assert.equal(r.status, 400); } ok('entradas inválidas -> 400');
 r = await call('POST', 'esto no es json'.slice(0), '/api/scores'); assert.equal(r.status, 400); ok('JSON roto -> 400');
 r = await post('<b>Ana  Maria</b>', 99); assert.equal(r.status, 201); assert.equal((await r.json()).name, 'bAna Maria/b'.slice(0, 12)); ok('se limpian < > y espacios repetidos, máx. 12 caracteres');
 

@@ -76,7 +76,7 @@ export default {
       let data; try { data = await request.json(); } catch (e) { return reply(env, 400, { error: 'JSON inválido' }); }
       const score = Math.floor(Number(data.score));
       const name = String(data.name || '').replace(/[\u0000-\u001f<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, 12);
-      if (!name || !Number.isFinite(score) || score < 0 || score > 999999) return reply(env, 400, { error: 'Datos no válidos' });
+      if (!name || !Number.isFinite(score) || score < 0 || score > 99999) return reply(env, 400, { error: 'Datos no válidos' });
       for (let attempt = 0; attempt < 4; attempt++) {
         const { list, sha } = await readScores(env);
         const sorted = top(list, MAX);

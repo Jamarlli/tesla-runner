@@ -21,8 +21,7 @@ El juego del dinosaurio de Chrome, pero con un **Tesla Roadster** que se propuls
 | `↑` | Saltar desde el suelo · en el aire, barrel roll |
 | `←` `→` | Flips en el aire (un toque = 1 vuelta; mantenido = vueltas seguidas; al soltar termina la vuelta) |
 | `↓` | Barrel roll en sentido contrario |
-| `INTRO` | Atajo de pruebas: salta a 10 puntos de la siguiente rampa |
-| `ESPACIO` en el game over | Vuelve a jugar al instante. Si ya has empezado a escribir tu nombre para el TOP 100, el espacio es un espacio del nombre; `INTRO` lo guarda |
+| `ESPACIO` en el game over | Vuelve a jugar al instante. Si ya has empezado a escribir tu nombre para el TOP 100, el espacio es un espacio del nombre; `Enter` lo guarda |
 
 **En móvil / táctil** (también en el navegador integrado de X): **toca** en cualquier parte para saltar, **mantén** el dedo para el turbo (propulsión) y **desliza** para las piruetas: izquierda/derecha = flips, arriba/abajo = barrel roll. Un deslizamiento rápido da una vuelta; si dejas el dedo desplazado sigue girando hasta que lo recoges. La franja superior de la pantalla queda libre para los gestos del navegador (deslizar hacia abajo para refrescar). En pantallas estrechas el juego usa un ancho lógico menor (360-600 px) para verse a tamaño real y reduce la velocidad del scroll, como hace el T-Rex original.
 
@@ -38,7 +37,6 @@ node server.js          # abre http://localhost:3000
 
 Si abres `index.html` directamente (doble clic) el juego funciona igual, pero el leaderboard es **local de tu navegador**.
 
-Parámetros útiles en la URL: `?ramp=30` (la rampa aparece a los 30 puntos en vez de a los 271) y `?debug`.
 
 ## Leaderboard y despliegue
 
