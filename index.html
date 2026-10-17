@@ -4,14 +4,23 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
 <title>Tesla Runner</title>
-<meta name="description" content="El juego del dinosaurio de Chrome con un Tesla Roadster propulsado por gas frío.">
+<meta name="description" content="Tesla Runner: el juego del dinosaurio de Chrome con un Tesla Roadster propulsado por gas frío. Salta, vuela y haz piruetas.">
+<meta property="og:type" content="website">
 <meta property="og:title" content="Tesla Runner">
-<meta property="og:description" content="El juego del dinosaurio de Chrome con un Tesla Roadster propulsado por gas frío.">
+<meta property="og:description" content="El juego del dinosaurio de Chrome con un Tesla Roadster propulsado por gas frío. ¿Cuántos puntos haces?">
+<meta property="og:url" content="https://jamarlli.github.io/tesla-runner/">
 <meta property="og:image" content="https://jamarlli.github.io/tesla-runner/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="El Tesla Roadster flotando sobre una fila de coches con gas frío y un Starship acercándose, con 99999 puntos y 99999 metros">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Tesla Runner">
+<meta name="twitter:description" content="El juego del dinosaurio de Chrome con un Tesla Roadster propulsado por gas frío.">
+<meta name="twitter:image" content="https://jamarlli.github.io/tesla-runner/og-image.png">
 <script>
-  // URL del servidor del leaderboard (déjalo vacío si sirves el juego con server.js). Ejemplo: 'https://tesla-runner.fly.dev'
-  window.TESLA_RUNNER_API = '';
+  // API del leaderboard cuando el juego está en GitHub Pages (Worker de Cloudflare que guarda el TOP 100 en la rama "leaderboard" del repo).
+  // En local (localhost) se usa siempre server.js; con ?api=https://... se puede probar otro servidor.
+  window.TESLA_RUNNER_API = 'https://tesla-runner-api.paper-jev.workers.dev';
 </script>
 <style>
   html, body { margin: 0; height: 100%; background: #fff; transition: background 1s; }
@@ -64,7 +73,6 @@
   #over .foot { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
   #over .again { display: flex; gap: 8px; align-items: center; font-size: 10px; }
   #over .note { font-size: 10px; opacity: .7; text-transform: none; }
-  #toast { font-size: 10px; text-transform: none; min-height: 12px; }
   @media (max-width: 520px) { #board { columns: 1; } }
 </style>
 </head>
@@ -93,7 +101,6 @@
         <button id="shareBtn" type="button" class="kbtn">COMPARTIR EN X</button>
         <div class="again"><span class="key wide" data-k="Space">ESPACIO</span><span>JUGAR OTRA VEZ</span></div>
       </div>
-      <div id="toast"></div>
     </div>
   </div>
 </div>
@@ -997,8 +1004,15 @@ const ARROWS = { ArrowLeft: 'left', ArrowRight: 'right', ArrowDown: 'down' };
 const typing = e => e.target && /^(INPUT|TEXTAREA|BUTTON|SELECT)$/.test(e.target.tagName);
 document.addEventListener('keydown', e => {
   const overOpen = S.crashed && !$('over').hidden;
-  // con el leaderboard abierto: ESPACIO vuelve a jugar siempre (guardando antes el nombre si lo has escrito)
-  if (overOpen && e.code === 'Space') { e.preventDefault(); if (!e.repeat) playAgainFromOver(); return; }
+  // con el leaderboard abierto: ESPACIO vuelve a jugar, salvo que ya hayas empezado a escribir tu nombre
+  if (overOpen && e.code === 'Space') {
+    const inp = $('nameInput');
+    if (!$('nameForm').hidden && inp.value.length > 0) {      // ya has empezado a escribir: el espacio es un espacio del nombre
+      if (e.target !== inp) { e.preventDefault(); inp.focus(); if (inp.value.length < 12) inp.value += ' '; }
+      return;
+    }
+    e.preventDefault(); if (!e.repeat) playAgainFromOver(); return;                       // campo vacío: vuelve a jugar
+  }
   // las letras van solas al campo del nombre (sin tener que pulsar en él)
   if (overOpen && !$('nameForm').hidden && e.target !== $('nameInput') && /^[a-z0-9]$/i.test(e.key) && !e.ctrlKey && !e.metaKey && !e.altKey) { $('nameInput').focus(); return; }
   if (typing(e)) return;
@@ -1023,7 +1037,7 @@ document.addEventListener('keyup', e => {
 const $ = id => document.getElementById(id);
 // Leaderboard: con server.js es el mismo servidor ('/api/scores'). Si el juego está en un hosting estático (GitHub Pages...),
 // pon la URL de tu API en TESLA_RUNNER_API (arriba, en el <head>) o pásala con ?api=https://mi-api.example.com
-const API_BASE = (new URLSearchParams(location.search).get('api') || window.TESLA_RUNNER_API || '').replace(/\/$/, '');
+const API_BASE = (new URLSearchParams(location.search).get('api') || (/^(localhost|127\.)/.test(location.hostname) ? '' : window.TESLA_RUNNER_API) || '').replace(/\/$/, '');
 const API = API_BASE ? API_BASE + '/api/scores'
   : (location.protocol.startsWith('http') && !/\.github\.io$/.test(location.hostname) ? '/api/scores' : null);
 const LS_BOARD = 'teslaRunnerBoard', LS_NAME = 'teslaRunnerName';
@@ -1082,8 +1096,10 @@ function topRank(list, sc) {
 async function showOver() {
   finalScore = score();
   $('finalScore').textContent = pad(finalScore);
-  $('nameForm').hidden = true; $('saved').hidden = true; $('saveBtn').disabled = false; $('topMsg').textContent = ''; $('toast').textContent = '';
-  try { $('nameInput').value = localStorage.getItem(LS_NAME) || ''; } catch (e) {}
+  $('nameForm').hidden = true; $('saved').hidden = true; $('saveBtn').disabled = false; $('topMsg').textContent = '';
+  $('nameInput').value = '';
+  let last = ''; try { last = localStorage.getItem(LS_NAME) || ''; } catch (e) {}
+  $('nameInput').placeholder = last || 'NOMBRE';
   $('over').hidden = false; document.body.classList.add('overOpen');
   const list = await refreshBoard(null);
   if (!S.crashed) return;
@@ -1103,7 +1119,8 @@ function hideOver() {
 const wantsSave = () => !$('over').hidden && !$('nameForm').hidden && !$('saveBtn').disabled && $('nameInput').value.trim().length > 0;
 async function saveScore() {
   if ($('saveBtn').disabled) return;
-  const name = $('nameInput').value.replace(/[<>]/g, '').trim().slice(0, 12).toUpperCase() || 'ANÓNIMO', sc = finalScore;
+  let last = ''; try { last = localStorage.getItem(LS_NAME) || ''; } catch (e) {}
+  const name = ($('nameInput').value || last).replace(/[<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, 12).toUpperCase() || 'ANÓNIMO', sc = finalScore;
   try { localStorage.setItem(LS_NAME, name); } catch (err) {}
   $('saveBtn').disabled = true;
   const entry = await postScore(name, sc);
@@ -1113,40 +1130,42 @@ async function saveScore() {
   $('topMsg').textContent = ''; $('saved').hidden = false; $('saved').textContent = '¡Guardado!';
   await refreshBoard(entry);
 }
-// Espacio con el panel abierto: guarda el nombre (si lo has escrito) y vuelve a jugar
-function playAgainFromOver() { if (wantsSave()) saveScore(); press(); }
+function playAgainFromOver() { press(); }
 
-/* ----- Compartir en X: texto en el idioma del navegador + imagen de la demo con tu puntuación ----- */
+/* ----- Compartir en X: texto en el idioma del navegador + enlace. La imagen la pone X sola como tarjeta del enlace (og:image) ----- */
 const I18N = {
-  es: { text: '¡He conseguido {n} puntos en Tesla Runner! 🚗🚀 ¿Me superas?', copied: 'Imagen copiada: pégala con Ctrl+V en el tuit', saved: 'Imagen descargada: adjúntala al tuit' },
-  en: { text: 'I scored {n} points in Tesla Runner! 🚗🚀 Can you beat me?', copied: 'Image copied: paste it with Ctrl+V in the tweet', saved: 'Image downloaded: attach it to your tweet' },
-  fr: { text: "J'ai marqué {n} points sur Tesla Runner ! 🚗🚀 Tu peux faire mieux ?", copied: 'Image copiée : colle-la avec Ctrl+V dans le tweet', saved: 'Image téléchargée : joins-la au tweet' },
-  de: { text: 'Ich habe {n} Punkte bei Tesla Runner erreicht! 🚗🚀 Schaffst du mehr?', copied: 'Bild kopiert: mit Strg+V in den Tweet einfügen', saved: 'Bild heruntergeladen: an den Tweet anhängen' },
-  pt: { text: 'Fiz {n} pontos no Tesla Runner! 🚗🚀 Consegues superar-me?', copied: 'Imagem copiada: cola com Ctrl+V no tweet', saved: 'Imagem descarregada: anexa ao tweet' },
-  it: { text: 'Ho fatto {n} punti a Tesla Runner! 🚗🚀 Riesci a battermi?', copied: 'Immagine copiata: incollala con Ctrl+V nel tweet', saved: 'Immagine scaricata: allegala al tweet' },
-  ca: { text: 'He aconseguit {n} punts a Tesla Runner! 🚗🚀 Em pots superar?', copied: 'Imatge copiada: enganxa-la amb Ctrl+V al tuit', saved: 'Imatge descarregada: adjunta-la al tuit' },
+  es: '¡He conseguido {n} puntos en Tesla Runner! 🚗🚀 ¿Me superas?',
+  en: 'I scored {n} points in Tesla Runner! 🚗🚀 Can you beat me?',
+  fr: "J'ai marqué {n} points sur Tesla Runner ! 🚗🚀 Tu peux faire mieux ?",
+  de: 'Ich habe {n} Punkte bei Tesla Runner erreicht! 🚗🚀 Schaffst du mehr?',
+  pt: 'Fiz {n} pontos no Tesla Runner! 🚗🚀 Consegues superar-me?',
+  it: 'Ho fatto {n} punti a Tesla Runner! 🚗🚀 Riesci a battermi?',
+  ca: 'He aconseguit {n} punts a Tesla Runner! 🚗🚀 Em pots superar?',
 };
 const userLang = () => { const l = ((navigator.languages && navigator.languages[0]) || navigator.language || 'en').slice(0, 2).toLowerCase(); return I18N[l] ? l : 'en'; };
+function shareScore() {
+  const text = I18N[userLang()].replace('{n}', finalScore);
+  const pageUrl = location.protocol.startsWith('http') && !/^(localhost|127\.)/.test(location.hostname) ? location.href.split('?')[0] : '';
+  let u = 'https://x.com/intent/post?text=' + encodeURIComponent(text) + '&hashtags=TeslaRunner';
+  if (pageUrl) u += '&url=' + encodeURIComponent(pageUrl);
+  window.open(u, '_blank', 'noopener');
+}
 
-// Imagen 1200x630 imitando la demo: el Roadster flotando sobre una fila de coches con gas frío, un Starship acercándose a lo lejos
-// y la puntuación en la esquina superior derecha (como en el juego). Con sc = null no pone puntuación (imagen para la tarjeta del enlace).
-function makeShareImage(sc) {
+// Genera og-image.png (1200x630): el Roadster flotando sobre una fila de coches con gas frío, un Starship acercándose a lo lejos
+// y puntos/metros arriba a la derecha. Se usa como tarjeta del enlace; se regenera con ?debug -> T.makeShareImage(99999, 9999)
+function makeShareImage(sc, meters) {
   const c = document.createElement('canvas'); c.width = 1200; c.height = 630; const g = c.getContext('2d');
   g.imageSmoothingEnabled = false; g.fillStyle = '#fff'; g.fillRect(0, 0, 1200, 630);
   const U = 4, gy = 548;
-  // suelo
   g.fillStyle = COLOR; g.fillRect(0, gy, 1200, 4); g.drawImage(groundTex, 0, 2, 600, 10, 0, gy + 4, 1200, 40);
-  // fila de coches (como en la presentación)
   const lineup = ['SEMI', 'M3', 'MY', 'CT', 'CC'], boxes = []; let x = 150;
   lineup.forEach(k => { const s = front(k); g.drawImage(s, x, gy - s.height * U, s.width * U, s.height * U); boxes.push([x, x + s.width * U, gy - s.height * U]); x += s.width * U + 26; });
   const topAt = px => { const b = boxes.find(q => px >= q[0] && px <= q[1]); return b ? b[2] : gy; };
-  // Roadster flotando, ligeramente inclinado
   const R = 5, cx = 540, cy = 232, ang = -0.1;
   const nz = [CAR_W * 0.3, CAR_W * 0.5, CAR_W * 0.7].map(nx => {
     const lx = (nx - CAR_W / 2) * R, ly = (18 - CAR_H / 2) * R;
     return [cx + lx * Math.cos(ang) - ly * Math.sin(ang), cy + lx * Math.sin(ang) + ly * Math.cos(ang)];
   });
-  // gas frío de los tres propulsores
   g.fillStyle = COLOR;
   nz.forEach(([nx, ny], k) => {
     const end = topAt(nx) - 6, len = Math.max(40, end - ny);
@@ -1161,32 +1180,13 @@ function makeShareImage(sc) {
   g.drawImage(roadBodySprite({ crashed: false, blink: false }), -CAR_W / 2, -CAR_H / 2);
   WHEELS.forEach(w => g.drawImage(wheelFrame(1), Math.round(w[0] - 6.5) - CAR_W / 2, Math.round(w[1] - 6.5) - CAR_H / 2));
   g.restore();
-  // Starship acercándose a lo lejos (más pequeño y más tenue)
-  g.globalAlpha = 0.7; g.drawImage(rocketSprite(0), 900, 118, 52 * 3, 19 * 3); g.globalAlpha = 1;
-  // textos
+  g.globalAlpha = 0.7; g.drawImage(rocketSprite(0), 900, 128, 52 * 3, 19 * 3); g.globalAlpha = 1;
   g.fillStyle = COLOR; g.textBaseline = 'top';
   g.font = "bold 30px 'Courier New', monospace"; g.textAlign = 'left'; g.fillText('T E S L A   R U N N E R', 44, 40);
-  if (sc != null) { g.font = "bold 54px 'Courier New', monospace"; g.textAlign = 'right'; g.fillText(pad(sc), 1156, 34); }
+  g.textAlign = 'right';
+  if (sc != null) { g.font = "bold 54px 'Courier New', monospace"; g.fillText(pad(sc), 1156, 34); }
+  if (meters != null) { g.font = "bold 30px 'Courier New', monospace"; g.fillText(meters + ' M', 1156, 96); }
   return c;
-}
-async function shareScore() {
-  const L = I18N[userLang()], sc = finalScore, text = L.text.replace('{n}', sc);
-  const pageUrl = location.protocol.startsWith('http') && !/^(localhost|127\.)/.test(location.hostname) ? location.href.split('?')[0] : '';
-  const btn = $('shareBtn'); btn.disabled = true;
-  try {
-    const blob = await new Promise(r => makeShareImage(sc).toBlob(r, 'image/png'));
-    const file = new File([blob], 'tesla-runner.png', { type: 'image/png' });
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {          // móvil: hoja de compartir con la imagen adjunta
-      try { await navigator.share({ text: text + (pageUrl ? ' ' + pageUrl : ''), files: [file] }); return; } catch (e) { if (e && e.name === 'AbortError') return; }
-    }
-    let copied = false;                                                          // escritorio: imagen al portapapeles + ventana de X
-    try { await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]); copied = true; } catch (e) {}
-    if (!copied) { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'tesla-runner.png'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); }
-    $('toast').textContent = copied ? L.copied : L.saved;
-    let u = 'https://x.com/intent/post?text=' + encodeURIComponent(text) + '&hashtags=TeslaRunner';
-    if (pageUrl) u += '&url=' + encodeURIComponent(pageUrl);
-    window.open(u, '_blank', 'noopener');
-  } finally { btn.disabled = false; }
 }
 $('nameForm').addEventListener('submit', e => { e.preventDefault(); saveScore(); });
 $('shareBtn').addEventListener('click', shareScore);

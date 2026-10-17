@@ -7,7 +7,7 @@ El juego del dinosaurio de Chrome, pero con un **Tesla Roadster** que se propuls
 - Cada ~271 puntos aparece una **rampa gigante**: te lleva boca abajo por el techo y tienes que girar en el aire para caer sobre las ruedas.
 - Flips, barrel rolls y combos suman puntos. Aterriza mal y explotas.
 - Leaderboard TOP 100 guardado en un archivo (`scores.json`).
-- Botón **Compartir en X**: texto en el idioma del navegador y una imagen con tu puntuación (en móvil se adjunta sola; en escritorio se copia al portapapeles para pegarla en el tuit).
+- Botón **Compartir en X**: tuit con tu puntuación en el idioma del navegador (es, en, fr, de, pt, it, ca) y el enlace del juego, que X muestra con una tarjeta de imagen (`og-image.png`).
 
 ## Controles
 
@@ -18,7 +18,7 @@ El juego del dinosaurio de Chrome, pero con un **Tesla Roadster** que se propuls
 | `←` `→` | Flips en el aire (un toque = 1 vuelta; mantenido = vueltas seguidas; al soltar termina la vuelta) |
 | `↓` | Barrel roll en sentido contrario |
 | `INTRO` | Atajo de pruebas: salta a 10 puntos de la siguiente rampa |
-| `ESPACIO` en el game over | Vuelve a jugar al instante (si has escrito tu nombre para el TOP 100, lo guarda antes) |
+| `ESPACIO` en el game over | Vuelve a jugar al instante. Si ya has empezado a escribir tu nombre para el TOP 100, el espacio es un espacio del nombre; `INTRO` lo guarda |
 
 En móvil: toca la pantalla para saltar y mantén para propulsarte.
 
@@ -68,6 +68,24 @@ docker run -d -p 3000:3000 -v tesla-data:/data tesla-runner
 
 Sin API configurada, en GitHub Pages el leaderboard funciona en modo local.
 
+### Opción C — Cloudflare Worker que guarda el TOP 100 en un archivo del repo (la que usa la versión de GitHub Pages)
+
+Sin servidor propio y gratis. El Worker (`worker/index.js`) expone el mismo API (`GET/POST /api/scores`) y guarda el ranking en `scores.json` de la **rama `leaderboard`** del propio repo: cada puntuación que entra en el TOP 100 es un commit. Así el archivo está versionado y a la vista, y el historial de `main` no se llena de commits de puntuaciones.
+
+1. Crea la rama de datos con un `scores.json` vacío (`[]`) en el repo: es una rama aparte, sin relación con `main`.
+2. Crea un [token de GitHub de grano fino](https://github.com/settings/personal-access-tokens/new) con acceso **solo a este repo** y el permiso **Contents: Read and write**.
+3. Despliega el Worker (necesitas una cuenta de Cloudflare):
+   ```bash
+   cd worker
+   npx wrangler login
+   npx wrangler secret put GITHUB_TOKEN     # pega el token del paso 2
+   npx wrangler deploy
+   ```
+4. Pon la URL del Worker en `window.TESLA_RUNNER_API` (`index.html`) y su dominio de juego en `ALLOWED_ORIGIN` (`worker/wrangler.toml`).
+5. Prueba el Worker en local con GitHub simulado: `node worker/test.mjs`.
+
+El token es un secreto de Cloudflare: **nunca** va en el repo ni en `index.html`. La lista de puntuaciones se puede ver en `https://github.com/<tu-usuario>/tesla-runner/blob/leaderboard/scores.json`.
+
 ### Variables de entorno del servidor
 
 | Variable | Por defecto | Descripción |
@@ -84,6 +102,8 @@ Sin API configurada, en GitHub Pages el leaderboard funciona en modo local.
 ```
 index.html   el juego completo (canvas, sprites en pixel art, física, UI del leaderboard)
 server.js    servidor sin dependencias: sirve el juego y guarda scores.json
+worker/      Worker de Cloudflare: guarda el TOP 100 como scores.json en la rama `leaderboard`
+og-image.png tarjeta de imagen del enlace (generada con el propio juego)
 Dockerfile   imagen lista para desplegar
 fly.toml     plantilla para Fly.io
 ```

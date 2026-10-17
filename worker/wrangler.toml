@@ -1,0 +1,12 @@
+# Worker de Cloudflare con el API del leaderboard (ver ../README.md, "Opción C")
+name = "tesla-runner-api"
+main = "index.js"
+compatibility_date = "2025-01-01"
+
+[vars]
+GITHUB_REPO = "Jamarlli/tesla-runner"      # repo donde se guarda el archivo
+GITHUB_BRANCH = "leaderboard"              # rama de datos (así el historial de main no se llena de commits de puntuaciones)
+SCORES_PATH = "scores.json"
+ALLOWED_ORIGIN = "https://jamarlli.github.io"   # dominio desde el que se juega (CORS)
+
+# El token NO va aquí. Se añade como secreto:   npx wrangler secret put GITHUB_TOKEN
