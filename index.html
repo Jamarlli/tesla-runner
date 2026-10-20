@@ -585,7 +585,7 @@ function reset() {
     // fases: 'ground' | 'ramp'. sx = vista espejada (se alterna tras cada rampa)
     zoom: 1, phase: 'ground', sx: 1, sy: 1, zoneTime: 0, grace: 0, ramp: null,
     rampPending: false, noSpawn: false, zoneDist: 0, fade: 0, fadeDir: 0,
-    bonus: 0, rampsDone: 0, popups: [], keys: {}, upLock: false, rotReq: { lr: 0, ud: 0 },
+    bonus: 0, rampsDone: 0, popups: [], keys: {}, upLock: false, rotReq: { lr: 0, ud: 0 }, rampHelp: false, helpScale: 1,
   });
   setInverted(false);
 }
@@ -792,10 +792,21 @@ function updateRamp(dt) {
   if (r.t < P0 + P1 + P2) return;
   // se acaba el techo: la rampa desaparece y el coche cae boca abajo hasta el suelo normal (vista espejada)
   const q = rampPose(), c = S.car;
+  S.rampHelp = S.rampsDone === 0;   // primera rampa: si no endereza el coche, el tiempo se frena y se le explica
   S.sx = -S.sx; S.phase = 'ground'; S.ramp = null; S.rampsDone++;
   Object.assign(c, { x: W - q.x - CAR_W / 2, y: CEIL_Y, vel: -5, noCap: true, jumping: true, reachedMin: true,
                      th: 0, ph: Math.PI, thT: null, phT: null, thAcc: 0, phAcc: 0, fuel: 1 });
   S.zoneDist = actualDistance(); S.grace = GRACE; S.noSpawn = false; S.obstacles = []; S.clouds = [];
+}
+
+// Ayuda de la 1ª rampa: mientras el coche cae boca abajo sin que el jugador haya empezado a girar, el tiempo se ralentiza hasta pararse
+const HELP_STOP_Y = -60;
+function helpTimeScale() {
+  const c = S.car;
+  if (!S.rampHelp || !S.playing || S.crashed || c.exploded) { S.helpScale = 1; return 1; }
+  if (!c.jumping || c.phT !== null || c.ph !== Math.PI) { S.rampHelp = false; S.helpScale = 1; return 1; }   // ya está girando (o aterrizó)
+  const p = Math.max(0, (c.y - CEIL_Y) / (HELP_STOP_Y - CEIL_Y));
+  return S.helpScale = p >= 0.9 ? 0 : Math.max(0.08, 1 - p / 0.9);
 }
 
 function update(dt) {
@@ -979,6 +990,27 @@ function render() {
     ctx.globalAlpha = Math.max(0, Math.min(1, (1600 - pp.age) / 500)); ctx.textAlign = 'center'; ctx.fillStyle = COLOR;
     ctx.fillText(pp.text, W / 2, 56 - Math.min(pp.age, 400) * 0.02); ctx.textAlign = 'left'; ctx.globalAlpha = 1;
   }
+  // ayuda de la 1ª rampa
+  if (S.rampHelp && S.helpScale < 0.6) {
+    const touch = matchMedia('(pointer: coarse)').matches;
+    ctx.textAlign = 'center'; ctx.fillStyle = COLOR; ctx.font = "bold 13px 'Courier New', monospace";
+    ctx.fillText('ENDEREZA TU TESLA', W / 2, 80);
+    ctx.textAlign = 'left';
+    // flechas ↑ ↓ como las teclas del juego (en móvil, solo los triángulos tras "DESLIZA")
+    const arrow = (cx, cy, dir) => { ctx.beginPath(); ctx.moveTo(cx - 4, cy + 3 * dir); ctx.lineTo(cx + 4, cy + 3 * dir); ctx.lineTo(cx, cy - 3 * dir); ctx.closePath(); ctx.fill(); };
+    const ky = 100;
+    if (touch) {
+      ctx.fillText('DESLIZA', W / 2 - 45, ky);
+      arrow(W / 2 + 22, ky + 7, 1); arrow(W / 2 + 40, ky + 7, -1);
+    } else {
+      ctx.strokeStyle = COLOR; ctx.lineWidth = 1.5;
+      [-1, 1].forEach(d => {
+        const bx = W / 2 + d * 18 - 11;
+        ctx.beginPath(); ctx.roundRect(bx, ky, 22, 22, 4); ctx.stroke();
+        arrow(bx + 11, ky + 11, -d);
+      });
+    }
+  }
   // game over
   if (S.crashed) {
     ctx.fillStyle = COLOR; ctx.textAlign = 'center';
@@ -995,7 +1027,7 @@ function render() {
 let prev = performance.now();
 function loop(now) {
   const dt = Math.min(now - prev, 100); prev = now;
-  update(dt); render();
+  update(dt * helpTimeScale()); render();
   requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
